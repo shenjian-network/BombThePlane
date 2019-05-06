@@ -24,14 +24,16 @@ class ExtendPacketStatus:public ExtendPacketBase
 {
 public:
     ExtendPacketStatus();
-    ExtendPacketStatus(const PacketHead& ph,const char* uname);
+    ExtendPacketStatus(const PacketHead& ph,const char* uname1,const char* uname2);
     ~ExtendPacketStatus() {}
     void get_string(char* s);
-    char* get_user_name();
+    char* get_player_one_name();
+    char* get_player_two_name();
     void set_string(const PacketHead& ph,const char* s);  
 private:
     //PacketHead my_head;
-    char user_name[33];
+    char player_one_name[33];
+    char player_two_name[33];
 };
 
 /* 建立/销毁游戏包 */

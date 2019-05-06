@@ -95,6 +95,8 @@ User::User(const char *uname)
     set_user_name(uname);
     set_user_sockfd(-1);
     set_user_status(false);
+    set_is_playing(false);
+    set_no_field(-1);
 }
 
 char *User::get_user_name()
@@ -129,6 +131,27 @@ void User::set_user_name(const char *n)
 {
     strcpy(name, n);
 }
+
+/*~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~*/
+void User::set_is_playing(bool isp)
+{
+    is_playing=isp;
+}
+
+void User::set_no_field(int nf)
+{
+    no_field=nf;
+}
+
+bool User::get_is_playing()
+{
+    return is_playing;
+}
+
+int User::get_no_field()
+{
+    return no_field;
+}   
 
 bool User::SendMessage(ServerToClientBase *scb)
 {
@@ -645,6 +668,8 @@ bool UserManager::ClientSign(const int &client, const PacketHead& p,const char *
         //printf("2\n");
         my_links[dup_sock].set_user_status(false);
         delete pack_offline;
+        /*~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+        //发在线者的状态包
     }
     if (pack_ret->get_packet_head().get_function_type() == PacketHead::kS2CReportSuccess || pack_ret->get_packet_head().get_function_type() == PacketHead::kS2CReportSuccessDup)
     {
@@ -662,6 +687,9 @@ bool UserManager::ClientSign(const int &client, const PacketHead& p,const char *
         my_links[client].set_user_status(true);
         uit->set_user_status(true);
         delete pack_online;
+        /*~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+        //发在线者的状态包
+
     }
     if ((set_contain == NULL)||(user_set_length==0))
     {
@@ -1264,6 +1292,7 @@ void UserManager::ProvideService()
                             }
                             break;
                         }
+                        /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
                         default:
                         {
                             break;

@@ -6,6 +6,7 @@
 #define MYUSER
 #include "server_to_client.h"
 #include "client_to_server.h"
+#include "extend_packet.h"
 #include "server_to_database.h"
 #include <unistd.h>
 #include <getopt.h>
@@ -58,11 +59,19 @@ public:
     void Clear();
     friend bool operator==(const User& ua,const User& ub);
     friend bool operator==(const User& ua,const char* cb);
+    /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND FOR GAME~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    void set_is_playing(bool isp);
+    void set_no_field(int nf);
+    bool get_is_playing();
+    int get_no_field();    
 private: 
     static const int error_max_number=3;
     char name[33];      //用户名
     bool online;         //0表示不在线，1表示在线
     int sock_fd;        //用于连接的socket标识符,范围0-1023可直接映射
+    /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND FOR GAME~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    bool is_playing;     //0表示不在游戏中，1表示正在游戏
+    int no_field;       //对手socket
 };
 /*管理在线传输文件结构*/
 struct FileNode{
@@ -78,10 +87,6 @@ public:
     UserManager();
     ~UserManager();
     void ProvideService();
-    //void SignIn(const char *name, const char *passwd, int fd);  //进行一次登录操作
-    //void SignOut();                                             //判断是否有用户下线
-    //void SignUp(const char *name, const char *passwd, int fd);  //用户注册
-    //void ChangePwd(const char *name, const char *pwd_old, const char *pwd_new);
 private:
     //该部分创建的包用完后需要手动释放
     ServerToClientBase* CreateRetReportLoginPacket(ClientToServerReportLogin* cl,char*& set_contain,unsigned long& set_length);//包含登录和注册两部分
@@ -111,11 +116,11 @@ private:
     void ClientUserSetUpdate(const int& client,const PacketHead& p,const char* b);
     //Close
     void ClientClose(const int& client);
-    /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    //ADD
     //About Onlie File transfer
     void ClientFileOnlineNotify(const int& client,PacketHead& p,const char* b);
     void ClientFileOnlineData(const int& client,const PacketHead& p,const char* b);
+    /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
     //数据成员
     vector<User> my_clients;
     LinkUnit* my_links;
