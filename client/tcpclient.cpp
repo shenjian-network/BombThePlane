@@ -283,7 +283,8 @@ void TcpClient::inviteDstGUI(const QString& name){
     connect(inviteDstBox->button(QMessageBox::Ok), SIGNAL(clicked()), this, SLOT(acceptInvitation()), Qt::QueuedConnection);
     connect(inviteDstBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(declineInvitation()), Qt::QueuedConnection);
     inviteDstBoxList.insert(inviteDstBox);
-    box2opponame[inviteDstBox->button(QMessageBox::Ok)] = name;
+    acceptbutton2opponame[inviteDstBox->button(QMessageBox::Ok)] = name;
+    rejectbutton2opponame[inviteDstBox->button(QMessageBox::Cancel)] = name;
     inviteDstBox->exec();
 }
 
@@ -1911,13 +1912,12 @@ void TcpClient::inviteGame()
     QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
 
     opponame = button2name[button];
-    qDebug() << opponame << "\n";
-
 
     //寻找是否有你邀请的对象，对于不是你邀请的对象，全部发送拒绝包
     bool findOpponame = false;
     for(auto name : invitingName)
     {
+        qDebug() << name << "_invitingName\n";
         if(name == opponame)
             findOpponame = true;
         else
@@ -1936,7 +1936,6 @@ void TcpClient::inviteGame()
     }
     inviteDstBoxList.clear();
 
-
     if(findOpponame)
     {
         //由于你邀请的人也邀请了你，因此直接接受邀请
@@ -1947,31 +1946,31 @@ void TcpClient::inviteGame()
     {
         isInviting = true;//正在邀请opponame
 
+        //发送一个请求对战包
+
+        PacketHead sendPacketHead;
+
+        sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
+        sendPacketHead.set_function_type(PacketHead::kExtendBuildAndDestroyInvite);
+        sendPacketHead.set_length(64);
+
+        //首先取出文本信息以便计算包长度
+        std::string usernameString = QStringToString(username);
+        std::string opponameString = QStringToString(opponame);
+
+        ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
+            stringPadding(usernameString, 32).c_str(), stringPadding(opponameString, 32).c_str());
+
+        char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+        sendExtendPacketBuildAndDestroy.get_string(tmpStr);
+        socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+        delete[] tmpStr;
+
         //FINISH
         //GUI部分，隐藏主界面，并显示“正在邀请opponame", 要提供相应的选项
         inviteSrcGUI(opponame);
     }
-
-    //发送一个请求对战包
-
-    PacketHead sendPacketHead;
-
-    sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
-    sendPacketHead.set_function_type(PacketHead::kExtendBuildAndDestroyInvite);
-    sendPacketHead.set_length(64);
-
-    //首先取出文本信息以便计算包长度
-    std::string usernameString = QStringToString(username);
-    std::string opponameString = QStringToString(opponame);
-
-    ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
-        stringPadding(usernameString, 32).c_str(), stringPadding(opponameString, 32).c_str());
-
-    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
-    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-    delete[] tmpStr;
 }
 
 //TODO
@@ -2037,7 +2036,7 @@ void TcpClient::acceptInvitation()
     QObject * object = QObject::sender();
     QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
 
-    opponame = box2opponame[button];
+    opponame = acceptbutton2opponame[button];
     for(auto box: inviteDstBoxList) {
         box->close();
         delete box;
@@ -2082,6 +2081,9 @@ void TcpClient::declineInvitation()
 {
     //TODO
     //GUI部分，获得对方的用户名rejectName
+    QObject * object = QObject::sender();
+    QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
+    rejectName = rejectbutton2opponame[button];
 
     sendDeclineInvitationPacket();
 }
@@ -2097,7 +2099,8 @@ void TcpClient::recvAcceptInvitation()
 
     //TODO
     //GUI部分，关闭所有邀请的弹窗，游戏开始，可以摆放飞机
-
+    inviteSrcBox->close();
+    delete inviteSrcBox;
 }
 
 //TODO
@@ -2108,7 +2111,8 @@ void TcpClient::recvDeclineInvitation()
 
     //TODO
     //GUI部分，关闭“正在邀请opponame”的弹窗，然后回到主界面
-
+    inviteSrcBox->close();
+    delete inviteSrcBox;
 }
 
 
@@ -2522,6 +2526,7 @@ void TcpClient::readyRead(){
                             default:
                                  qDebug() << "switch kExtendReplyPre my_packet_head.get_function_type() case lost";
                         }
+                    break;
                     default:
                         qDebug() << "switch my_packet_head.get_packet_type() case lost";
 
