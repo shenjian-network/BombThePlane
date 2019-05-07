@@ -1,4 +1,4 @@
-__# BombThePlane (v1.0)
+* __# BombThePlane (v1.0)
 __
 **due 2019/5/6**
 
@@ -204,7 +204,9 @@ __
 | 2B   | 0x17  | 类型
 | 2B   | 0x00  | 已准备就绪 |
 | 4B   | | 长度  |
-
+| 6B   | | 位置(小) 三个unsigned short |
+| 6B   | | 位置(大) 三个unsigned short |
+> 注: 三个位置上下一一对应
 
 **server -> client** 
 

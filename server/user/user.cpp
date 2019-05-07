@@ -3,7 +3,7 @@
 XmlLog xl;
 
 /*SocketFunction部分*/
-const int SocketFunction::my_port = 25998;      //TODO
+int my_port;      //TODO
 const char *SocketFunction::my_ip = "0.0.0.0"; //TODO
 void SocketFunction::Die(const char *msg)
 {
@@ -97,6 +97,7 @@ User::User(const char *uname)
     set_user_status(false);
     set_is_playing(false);
     set_no_field(-1);
+    set_score(-1);
 }
 
 char *User::get_user_name()
@@ -143,6 +144,11 @@ void User::set_no_field(int nf)
     no_field=nf;
 }
 
+void User::set_score(int sc)
+{
+    score=sc;
+}
+
 bool User::get_is_playing()
 {
     return is_playing;
@@ -151,7 +157,12 @@ bool User::get_is_playing()
 int User::get_no_field()
 {
     return no_field;
-}   
+}  
+
+int User::get_score()
+{
+    return score;
+}
 
 bool User::SendMessage(ServerToClientBase *scb)
 {
@@ -228,6 +239,9 @@ void User::Clear()
     set_user_name("");
     set_user_sockfd(-1);
     set_user_status(false);
+    set_is_playing(false);
+    set_no_field(-1);
+    set_score(-1);
 }
 
 bool operator==(const User &ua, const User &ub)
@@ -599,6 +613,37 @@ void UserManager::CreateRetSetPacket(ClientToServerUserSetUpdate *cs, const char
     xl.appendlog_userconfig_change(fname, "update config sucess");
     return;
 }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+ServerToClientBase* UserManager::CreateRetInGame(User& player_one,User& player_two,bool is_in_game)
+{
+    ExtendPacketBase *ret_pack;
+    PacketHead ret_head;
+    ret_head.set_packet_type(PacketHead::kExtendStatus);
+    if(is_in_game) {
+        ret_head.set_function_type(PacketHead::kExtendStatusInGame);
+    } else {
+        ret_head.set_function_type(PacketHead::kExtendStatusOffGame);
+    }
+    ret_head.set_length(64);
+    ret_pack = new ExtendPacketStatus(ret_head,player_one.get_user_name(),player_two.get_user_name());
+    return (ServerToClientBase*)(ret_pack);    
+}
+ServerToClientBase* UserManager::CreateRetPre(bool is_pre)
+{
+    ExtendPacketBase *ret_pack;
+    PacketHead ret_head;
+    ret_head.set_packet_type(PacketHead::kExtendBegin);
+    if(is_pre) {
+        ret_head.set_function_type(PacketHead::kExtendBeginOffensive);
+    } else {
+        ret_head.set_function_type(PacketHead::kExtendReadyDeffensive);
+    }
+    ret_head.set_length(0);
+    ret_pack = new ExtendPacketBase(ret_head);
+    return (ServerToClientBase*)ret_pack;     
+}
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 UserManager::UserManager() : mydb()
 {
     // ServerToClientBase* t=CreateRetCls();
@@ -668,8 +713,6 @@ bool UserManager::ClientSign(const int &client, const PacketHead& p,const char *
         //printf("2\n");
         my_links[dup_sock].set_user_status(false);
         delete pack_offline;
-        /*~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-        //发在线者的状态包
     }
     if (pack_ret->get_packet_head().get_function_type() == PacketHead::kS2CReportSuccess || pack_ret->get_packet_head().get_function_type() == PacketHead::kS2CReportSuccessDup)
     {
@@ -681,11 +724,23 @@ bool UserManager::ClientSign(const int &client, const PacketHead& p,const char *
             if (cu.get_user_status())
             {
                 my_links[cu.get_user_sockfd()].SendMessage(pack_online);
+                /*~~~~~~~~~~~~~~~~~~~~extend~~~~~~~~~~~~~~~~~~~~~~*/
+                if(cu.get_is_playing()) {
+                    if(cu.get_user_sockfd()<my_clients[cu.get_no_field()].get_user_sockfd()) {
+                        ServerToClientBase *pack_in_game=CreateRetInGame(cu,my_clients[cu.get_no_field()]);
+                        uit->SendMessage(pack_in_game);
+                        delete pack_in_game;
+                    }
+                }
+                /*~~~~~~~~~~~~~~~~~~~~extend~~~~~~~~~~~~~~~~~~~~~~*/
                 //printf("3\n");
             }
         }
         my_links[client].set_user_status(true);
         uit->set_user_status(true);
+        uit->set_is_playing(false);
+        uit->set_score(-1);
+        uit->set_no_field(-1);
         delete pack_online;
         /*~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
         //发在线者的状态包
@@ -1010,6 +1065,7 @@ void UserManager::ClientClose(const int &client)
             ServerToClientBase *pack_offline;
             pack_offline = CreateRetInformPacket(0, uit->get_user_name());
             uit->set_user_status(false);
+            uit->set_score(-1);
             for(auto client:my_clients){
                 if(client.get_user_status()){
                     my_links[client.get_user_sockfd()].SendMessage(pack_offline);
@@ -1114,6 +1170,124 @@ void UserManager::ClientFileOnlineData(const int& client,const PacketHead& p,con
     delete c_pack;
     return;
 }
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+void UserManager::ClientBuildBase(const int& client,const PacketHead& p,const char* b)
+{
+    ExtendPacketBuildAndDestroy *c_pack;
+    c_pack = new ExtendPacketBuildAndDestroy();
+    c_pack->set_string(p,b);
+    vector<User>::iterator uit;
+    uit=find(my_clients.begin(),my_clients.end(),c_pack->get_receive_name());
+    uit->SendMessage((ServerToClientBase*)c_pack);
+    delete c_pack;
+    return;   
+}
+void UserManager::ClientBuildAcceptAndCancel(const int& client,const PacketHead& p,const char* b,bool is_acc)
+{
+    ExtendPacketBuildAndDestroy *c_pack;
+    ServerToClientBase *pack_set_ret;
+    c_pack = new ExtendPacketBuildAndDestroy();
+    c_pack->set_string(p,b);
+    vector<User>::iterator uita,uitb;
+    uita=find(my_clients.begin(),my_clients.end(),c_pack->get_send_name());
+    uitb=find(my_clients.begin(),my_clients.end(),c_pack->get_receive_name());
+    uita->set_is_playing(is_acc);
+    uita->set_score(-1);
+    uitb->set_is_playing(is_acc);
+    uitb->set_score(-1);
+    uita->set_no_field(uitb-my_clients.begin());
+    uitb->set_no_field(uita-my_clients.begin());
+    uitb->SendMessage((ServerToClientBase*)c_pack);
+    pack_set_ret=CreateRetInGame((*uita),(*uitb),is_acc);
+    for(auto cu:my_clients) 
+    {
+        if(cu.get_user_status()) {
+            cu.SendMessage(pack_set_ret);
+        }
+    }
+    delete pack_set_ret;
+    delete c_pack;
+    return;  
+
+}
+//prepare
+void UserManager::ClientPrepareStage(const int& client,const PacketHead& p,const char* b)
+{
+    vector<User>::iterator uit;
+    User *au;
+    User *bu;
+    User *tmpu;
+    ExtendPacketReady* read_pack;
+    uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
+    uit->set_score(0);
+    au=&(*uit);
+    bu=&my_clients[uit->get_no_field()];
+    if(!my_clients[uit->get_no_field()].get_score()) {
+        ServerToClientBase *pack_pre=CreateRetPre(true);
+        ServerToClientBase *pack_post=CreateRetPre(false);
+        if(rand()%2) {
+            tmpu=au;
+            au=bu;
+            bu=tmpu;
+        }
+        au->SendMessage(pack_pre);
+        bu->SendMessage(pack_post);
+        delete pack_pre;
+        delete pack_post;
+    }
+    read_pack=new ExtendPacketReady();
+    read_pack->set_string(p,b);
+    //log
+    return;
+}
+//predict
+void UserManager::ClientPredict(const int& client,const PacketHead& p,const char* b)
+{
+    vector<User>::iterator uit;
+    uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
+    ExtendPacketPlaying* pack_rec=new ExtendPacketPlaying();
+    pack_rec->set_string(p,b);
+    my_clients[uit->get_no_field()].SendMessage((ServerToClientBase*)pack_rec);
+    delete pack_rec;
+    return;    
+}
+//playing
+void UserManager::ClientToRival(const int& client,const PacketHead& p,const char* b)
+{
+    vector<User>::iterator uit;
+    uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
+    ExtendPacketBase* pack_rec=new ExtendPacketBase();
+    pack_rec->set_string(p,b);
+    my_clients[uit->get_no_field()].SendMessage((ServerToClientBase*)pack_rec);
+    delete pack_rec;
+    return;     
+}
+void UserManager::ClientHit(const int& client,const PacketHead& p,const char* b)
+{
+    ClientToRival(client,p,b);
+    vector<User>::iterator uit;
+    uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
+    my_clients[uit->get_no_field()].set_score(my_clients[uit->get_no_field()].get_score()+1);
+}
+//Game over
+void UserManager::ClientGameOver(const int& client,const PacketHead& p,const char* b)
+{
+    ClientToRival(client,p,b);
+    ServerToClientBase *pack_off_ret;
+    vector<User>::iterator uit;
+    uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
+    pack_off_ret=CreateRetInGame((*uit) ,(my_clients[uit->get_no_field()]),false);
+    for(auto cu:my_clients) 
+    {
+        if(cu.get_user_status()) {
+            cu.SendMessage(pack_off_ret);
+        }
+    }
+    // judge by clients todo
+    uit->set_is_playing(false);
+    my_clients[uit->get_no_field()].set_is_playing(false);
+}
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //主要流程
 void UserManager::ProvideService()
 {
@@ -1292,6 +1466,127 @@ void UserManager::ProvideService()
                             }
                             break;
                         }
+                        /*~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~*/
+                        case PacketHead::kExtendBuildAndDestroy:
+                        {
+                            switch (rec_head.get_function_type())
+                            {
+                            case PacketHead::kExtendBuildAndDestroyInvite:
+                            {
+                                ClientBuildBase(i,rec_head,buffer);
+                                break;
+                            }
+                            case PacketHead::kExtendBuildAndDestroyAccept:
+                            {
+                                ClientBuildAcceptAndCancel(i,rec_head,buffer,true);
+                                break;
+                            }
+                            case PacketHead::kExtendBuildAndDestroyReject:
+                            {
+                                ClientBuildBase(i,rec_head,buffer);
+                                break;
+                            }
+                            case PacketHead::kExtendBuildAndDestroyCancel:
+                            {
+                                ClientBuildAcceptAndCancel(i,rec_head,buffer,false);
+                                break;
+                            }
+                            default: 
+                            {
+                                break;
+                            }
+                            }
+                            break;                            
+                        }
+                        case PacketHead::kExtendReady:
+                        {
+                            switch (rec_head.get_function_type())
+                            {
+                            case PacketHead::kExtendReadyPlayer:
+                            {
+                                ClientPrepareStage(i,rec_head,buffer);
+                                break;
+                            }
+                            default: 
+                            {
+                                break;
+                            }
+                            }
+                            break;  
+                        }
+                        case PacketHead::kExtendPredict:
+                        {
+                            switch (rec_head.get_function_type())
+                            {
+                            case PacketHead::kExtendPredictGuess:
+                            {
+                                ClientPredict(i,rec_head,buffer);
+                                break;
+                            }
+                            case PacketHead::kExtendPredictJudge:
+                            {
+                                ClientPredict(i,rec_head,buffer);
+                                break;
+                            }
+                            default: 
+                            {
+                                break;
+                            }
+                            }
+                            break;
+                        }
+                        case PacketHead::kExtendReplyPre:
+                        {
+                            switch (rec_head.get_function_type())
+                            {
+                            case PacketHead::kExtendReplyPreNo:
+                            {
+                                ClientToRival(i,rec_head,buffer);
+                                break;
+                            }
+                            case PacketHead::kExtendReplyPreHurt:
+                            {
+                                ClientToRival(i,rec_head,buffer);
+                                break;
+                            }
+                            case PacketHead::kExtendReplyPreDestroy:
+                            {
+                                ClientToRival(i,rec_head,buffer);
+                                break;
+                            }
+                            case PacketHead::kExtendReplyPreFail:
+                            {
+                                ClientToRival(i,rec_head,buffer);
+                                break;
+                            }
+                            case PacketHead::kExtendReplyPreSuccess:
+                            {
+                                ClientHit(i,rec_head,buffer);
+                                break;
+                            }
+                            default: 
+                            {
+                                break;
+                            }
+                            }
+                            break; 
+                        }
+                        case PacketHead::kExtendGameOver:
+                        {
+                            switch (rec_head.get_function_type())
+                            {
+                            case PacketHead::kExtendGameOverReply:
+                            {
+                                ClientGameOver(i,rec_head,buffer);
+                                break;
+                            }
+                            default: 
+                            {
+                                break;
+                            }
+                            }
+                            break; 
+                        }
                         /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
                         default:
                         {
@@ -1330,10 +1625,22 @@ void creat_daemon(void)
     return;
 }
 
-//MAIN
-int main()
+void errorPrompt()
 {
+    printf("you can input like this:\n");
+    printf("\t\t./server -port 1010\n");  
+}
+//MAIN
+int main(int argc,char* argv[])
+{
+    if(argc!=3 || strcmp(argv[1],"-port")!=0)
+    {
+        errorPrompt();
+        return -1;
+    }
+    my_port=atoi(argv[2]); 
     creat_daemon();
+    srand((unsigned)time(NULL));
     UserManager myUserManager;
     myUserManager.ProvideService();
 }

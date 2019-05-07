@@ -1,7 +1,7 @@
 #include "my_database.h"
 const char MyDatabase::host[30]="localhost";
-const char MyDatabase::user[30]="u1652310";
-const char MyDatabase::passwd[30] = "u1652310"; //"" for lsx ; "u1652310" for sj
+const char MyDatabase::user[30]="root";
+const char MyDatabase::passwd[30] = "123456"; //"" for lsx ; "u1652310" for sj
 const char MyDatabase::charset[30]="utf8";
 const char MyDatabase::database[30]="db1652310";
 
