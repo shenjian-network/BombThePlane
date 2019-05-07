@@ -270,6 +270,21 @@ void TcpClient::successGUI(const QString& err){
     reply = QMessageBox::information(this, tr("成功"), err);
 }
 
+void TcpClient::inviteBoxGUI(const QString& err) {
+    QMessageBox box(QMessageBox::Information, "Waiting...", err);
+    box.setStandardButtons(QMessageBox::Cancel);
+    connect(box.button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(cancelGameActive()), Qt::QueuedConnection);
+    box.exec();
+}
+
+void TcpClient::inviteShowGUI(const QString& err){
+    QMessageBox box(QMessageBox::Information, "邀请", err);
+    box.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+//    connect(box.button(QMessageBox::Ok), SIGNAL(clicked()), this, SLOT(()), Qt::QueuedConnection);
+//    connect(box.button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(()), Qt::QueuedConnection);
+    box.exec();
+}
+
 // 显示聊天室的新窗口，用于聊天(FINISHED)
 void TcpClient::chatRoomGUI(){
     chatRoomWindow = new QWidget;
@@ -383,11 +398,11 @@ void TcpClient::chatRoomGUI(){
     chatRoomWindow->setLayout(chatRoomMainLayout);
     chatRoomWindow->show();
 
-    /* FOR DEBUG */
-    insertListWidget(QString("zhongyuchen"), true, false);
-    insertListWidget(QString("zhongyuchen2"), true, false);
-    insertListWidget(QString("zhongyuchen3"), false, false);
-    insertListWidget(QString("zhaiyuchen"), true, true);
+//    /* FOR DEBUG */
+//    insertListWidget(QString("zhongyuchen"), true, false);
+//    insertListWidget(QString("zhongyuchen2"), true, false);
+//    insertListWidget(QString("zhongyuchen3"), false, false);
+//    insertListWidget(QString("zhaiyuchen"), true, true);
 }
 
 bool TcpClient::isConnected(){
@@ -1176,7 +1191,7 @@ void TcpClient::insertListWidget(QString name, bool isOnline, bool isInGame){
         show_button_text = "离线";
     }
 
-    connect(button, SIGNAL(clicked()), this, SLOT(on_inviteGameBtn_clicked()), Qt::QueuedConnection);
+    connect(button, SIGNAL(clicked()), this, SLOT(inviteGame()), Qt::QueuedConnection);
 
     button->setText(show_button_text);
     button->setFlat(true);
@@ -1188,7 +1203,7 @@ void TcpClient::insertListWidget(QString name, bool isOnline, bool isInGame){
     layout->addWidget(button);
     layout->setMargin(0);
     layout->setSpacing(0);
-
+    button2name[button] = name;
     user->setLayout(layout);
     InitRightLayout();
 
@@ -1258,6 +1273,7 @@ void TcpClient::setUserStatus(QString name, bool isOnline){
     QWidget * widget;
     QLabel * box;
     QString curName;
+    QPushButton * button;
 
     qDebug() << "setUserStatus1";
     int flag = false;
@@ -1265,17 +1281,22 @@ void TcpClient::setUserStatus(QString name, bool isOnline){
     for(int i = 0;i < count; ++i){
         item = userList->item(i);
         widget = userList->itemWidget(item);
-        box = static_cast<QLabel*>(widget);
+        box = static_cast<QLabel*>(widget->layout()->itemAt(0)->widget());
+        button = static_cast<QPushButton*>(widget->layout()->itemAt(1)->widget());
         curName = box->text();
 
         if(curName == name){
             flag = true;
             if(isOnline){
+                button->setEnabled(true);
+                button->setText("邀请");
                 box->setEnabled(true);
                 box->setStyleSheet("QLabel{background: rgb(46, 50, 56)}"
                                          "QLabel{color: rgb(255, 255, 255)}"
                                          "QLabel:hover{background: rgb(58,63,69)}");
             } else {
+                button->setEnabled(false);
+                button->setText("离线");
                 box->setEnabled(false);
                 box->setStyleSheet("QLabel{background: rgb(46, 50, 56)}"
                                     "QLabel:hover{background: rgb(58,63,69)}"
@@ -1339,10 +1360,12 @@ void TcpClient::reportSuccess(){
         for(int i = 0;i < num; ++i){
             memcpy(name, uinfo[i], 32);
             qDebug() << name << " " << int(uinfo[i][32]-'0');
+            if(name == username)
+                continue;
             insertListWidget(QString(name), int(uinfo[i][32]-'0'), false); // TODO: 游戏状态，需要读包
         }
 
-        insertListWidget(QString("群聊"), true, false); // TODO：游戏状态，需要读包
+//        insertListWidget(QString("群聊"), true, false); // TODO：游戏状态，需要读包
     }
 }
 
@@ -1862,6 +1885,11 @@ void TcpClient::inviteGame()
     /*
     GUI部分，获得对方用户名opponame
     */
+    QObject * object = QObject::sender();
+    QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
+
+    opponame = button2name[button];
+    qDebug() << opponame << "\n";
 
 
     //寻找是否有你邀请的对象，对于不是你邀请的对象，全部发送拒绝包
@@ -1876,7 +1904,8 @@ void TcpClient::inviteGame()
             sendDeclineInvitationPacket();
         }
     }
-    
+
+    invitingName.clear();
     //TODO
     //GUI部分，关闭所有邀请的弹窗
 
@@ -1890,8 +1919,9 @@ void TcpClient::inviteGame()
     {
         isInviting = true;//正在邀请opponame
 
-        //TODO
+        //FINISH
         //GUI部分，隐藏主界面，并显示“正在邀请opponame", 要提供相应的选项
+        inviteBoxGUI("正在邀请" + opponame);
     }
 
     //发送一个请求对战包
@@ -1907,7 +1937,7 @@ void TcpClient::inviteGame()
     std::string opponameString = QStringToString(opponame);
 
     ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
-        stringPadding(usernameString, 32).c_str(), stringPadding(opponame, 32).c_str());
+        stringPadding(usernameString, 32).c_str(), stringPadding(opponameString, 32).c_str());
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
     sendExtendPacketBuildAndDestroy.get_string(tmpStr);
@@ -1931,8 +1961,10 @@ void TcpClient::showInvitation()
         return;
     }
 
+    invitingName.push_back(inviteName);
     //TODO
     //GUI部分，显示弹窗，同意或拒绝
+    inviteShowGUI(inviteName + "邀请你加入游戏");
 }
 
 
@@ -1952,7 +1984,7 @@ void TcpClient::sendAcceptInvitationPacket()
     sendPacketHead.set_length(64);
 
     ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
-        stringPadding(usernameString, 32).c_str(), stringPadding(opponame, 32).c_str());
+        stringPadding(usernameString, 32).c_str(), stringPadding(opponameString, 32).c_str());
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
     sendExtendPacketBuildAndDestroy.get_string(tmpStr);
@@ -2040,6 +2072,7 @@ void TcpClient::recvDeclineInvitation()
 
 
 //TODO
+// 槽函数
 void TcpClient::cancelGameActive()
 {
     isGaming = false;
@@ -2048,6 +2081,7 @@ void TcpClient::cancelGameActive()
     主动取消游戏
     回到主界面，恢复opponame的按钮
     */
+    qDebug() << "cancle 成功" << "\n";
 
     //向对端发送主动取消游戏包（这时候server会向所有用户发送offgame包）
     PacketHead sendPacketHead;
@@ -2061,7 +2095,7 @@ void TcpClient::cancelGameActive()
     std::string opponameString = QStringToString(opponame);
 
     ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
-        stringPadding(usernameString, 32).c_str(), stringPadding(opponame, 32).c_str());
+        stringPadding(usernameString, 32).c_str(), stringPadding(opponameString, 32).c_str());
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
     sendExtendPacketBuildAndDestroy.get_string(tmpStr);
@@ -2123,7 +2157,7 @@ void TcpClient::gameReady()
         loc_small, loc_big);
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
+    sendExtendPacketReady.get_string(tmpStr);
     socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
@@ -2379,7 +2413,7 @@ void TcpClient::readyRead(){
                         switch(my_packet_head.get_function_type())
                         {
                             case PacketHead::kExtendBuildAndDestroyInvite://发起对局邀请包
-                                current_read_state = READ_EXTEND_BUILD_AND_DESTROY_INVITE:
+                                current_read_state = READ_EXTEND_BUILD_AND_DESTROY_INVITE;
                                 current_byte_num_to_read = my_packet_head.get_length();
                                 break;
                             case PacketHead::kExtendBuildAndDestroyAccept://接受对局邀请包
@@ -2600,8 +2634,3 @@ void TcpClient::on_fileDialogBtn_clicked(){
     tryToSend(filename);
 }
 
-
-// TODO: 邀请游戏
-void TcpClient::on_inviteGameBtn_clicked() {
-
-}

@@ -10,6 +10,7 @@
 #include <QProgressDialog>
 #include <QNetworkConfigurationManager>
 #include <map>
+#include <QQueue>
 #include "../common/client_to_server.h"
 #include "../common/packet_head.h"
 #include "../common/extend_packet.h"
@@ -43,7 +44,8 @@ enum ReadState
     /*----------------------------------------------------------------------
     Extend包的额外状态
     -------------------------------------------------------------------------*/
-
+    READ_EXTEND_PREDICT_GUESS,
+    READ_EXTEND_PREDICT_JUDGE,
     READ_EXTEND_STATUS_IN_GAME,
     READ_EXTEND_STATUS_OFF_GAME,
     READ_EXTEND_BUILD_AND_DESTROY_INVITE,
@@ -82,6 +84,10 @@ public:
     void errorGUI(const QString& err);
 
     void successGUI(const QString& err);
+
+    void inviteBoxGUI(const QString& err);
+
+    void inviteShowGUI(const QString& err);
 
     //显示更改密码成功窗口
     void changePwdSuccessGUI();
@@ -164,6 +170,49 @@ public:
 
     bool isConnected();
 
+
+    void inGame();
+
+    void offGame();
+
+
+
+    void showInvitation();
+
+    void sendAcceptInvitationPacket();
+
+    void sendDeclineInvitationPacket();
+
+    void recvAcceptInvitation();
+
+    void recvDeclineInvitation();
+
+
+
+    void cancelGamePassive();
+
+    void offensive();
+
+    void defensive();
+
+    void gameReady();
+
+    void gameStart();
+
+    void askForPointState();
+
+    void replyPointState();
+
+    void recvReplyPointState(const unsigned short res);
+
+    void assertPlanePos();
+
+    void replyAssertPlanePos();
+
+    void recvReplyAssertPlanePos(const unsigned short res);
+
+    void gameOver();
+
 private slots:
     // Signal func to handle read event
     //
@@ -220,8 +269,17 @@ private slots:
 
     void cancelSendFileDataActive();//send主动取消发送（GUI触发）
 
-    void on_inviteGameBtn_clicked();
 
+
+
+
+    void inviteGame();
+
+    void cancelGameActive();
+
+    void acceptInvitation();
+
+    void declineInvitation();
 private:
     PacketHead my_packet_head;
     ServerToClientReportSuccess my_server_to_client_report_success;
@@ -263,6 +321,7 @@ private:
 
     ClickableLabel * preChatter; // 上一个与你对话的用户
     QLabel * curChatter; // 现在与你对话的用户
+    QMap <QPushButton*,QString> button2name;
     QStackedLayout * rightStackLayout; // 现在与你对话的用户的聊天窗
     QHBoxLayout * chatRoomMainLayout;
     QMap <QString, int> user2Index;
@@ -286,7 +345,7 @@ private:
     bool isGaming;
     bool isInviting;
 
-    queue<QString> invitingName;
+    QQueue<QString> invitingName;
 };
 
 #endif // TCPCLIENT_H
