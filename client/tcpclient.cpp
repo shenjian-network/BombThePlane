@@ -2127,12 +2127,12 @@ void TcpClient::cancelGamePassive()
 //TODO
 void TcpClient::offensive()
 {
-    /*将状态转为先手，然后恢复oppoBoard棋盘（取消冻结）*/
+    /*GUI部分，将状态转为先手，然后恢复oppoBoard棋盘（取消冻结）*/
 }
 
 void TcpClient::defensive()
 {
-    /*将状态转为后手，然后冻结oppoBoard棋盘*/
+    /*GUI部分，将状态转为后手，然后冻结oppoBoard棋盘*/
 }
 
 //TODO
@@ -2141,16 +2141,25 @@ void TcpClient::gameReady()
 {
     //GUI部分，摆放好了以后，首先先要判断三个位置是否合法，如果不合法要提示错误
 
+    //GUI部分，三个位置坐标, 装在下面的数组里
+
+    static const int loc_num=3;
+    unsigned short loc_small[loc_num];
+    unsigned short loc_big[loc_num];
+
 
     //如果合法，发送gameReady包
     PacketHead sendPacketHead;
 
     sendPacketHead.set_packet_type(PacketHead::kExtendReady);
     sendPacketHead.set_function_type(PacketHead::kExtendReadyPlayer);
-    sendPacketHead.set_length(0);
+    sendPacketHead.set_length(12);
+
+    ExtendPacketReady sendExtendPacketReady(sendPacketHead,
+        loc_small, loc_big);
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendPacketHead.get_string(tmpStr);
+    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
     socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
@@ -2159,7 +2168,7 @@ void TcpClient::gameReady()
 //TODO
 void TcpClient::gameStart()
 {
-    //接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
+    //GUI部分，接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
 }
 
 
