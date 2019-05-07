@@ -12,6 +12,7 @@
 #include <map>
 #include "../common/client_to_server.h"
 #include "../common/packet_head.h"
+#include "../common/extend_packet.h"
 #include "../common/server_to_client.h"
 #include "clickablelabel.h"
 
@@ -37,7 +38,18 @@ enum ReadState
     READ_C2C_FILE_NOTIFY_CANCEL_SEND,
     READ_C2C_FILE_NOTIFY_ACCEPT,
     READ_C2C_FILE_NOTIFY_CANCEL_RECV,
-    READ_C2C_FILE_DATA
+    READ_C2C_FILE_DATA,
+
+    /*----------------------------------------------------------------------
+    Extend包的额外状态
+    -------------------------------------------------------------------------*/
+
+    READ_EXTEND_STATUS_IN_GAME,
+    READ_EXTEND_STATUS_OFF_GAME,
+    READ_EXTEND_BUILD_AND_DESTROY_INVITE,
+    READ_EXTEND_BUILD_AND_DESTROY_ACCEPT,
+    READ_EXTEND_BUILD_AND_DESTROY_REJECT,
+    READ_EXTEND_BUILD_AND_DESTROY_CANCEL
 };
 
 
@@ -218,6 +230,15 @@ private:
     ServerToClientUserSetUpdate my_server_to_client_user_set_update;
     SenderToReceiverFileNotify my_sender_to_receiver_file_notify;
     SenderToReceiverFileData my_sender_to_receiver_file_data;
+
+    /*----------------------------------------------------------------------
+    Extend包的额外报文
+    -------------------------------------------------------------------------*/
+
+    ExtendPacketStatus my_extend_packet_status;
+    ExtendPacketBuildAndDestroy my_extend_packet_build_and_destroy;
+    ExtendPacketPlaying my_extend_packet_playing;
+
     QTcpSocket *socket;
     Ui::TcpClient *ui;
 
@@ -252,7 +273,15 @@ private:
     QString fileName;
     int fileLen;
 
+    QString opponame;
+    QString inviteName;
+    QString rejectName;
+
     bool isOnline;
+    bool isGaming;
+    bool isInviting;
+
+    queue<QString> invitingName;
 };
 
 #endif // TCPCLIENT_H

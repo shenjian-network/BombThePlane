@@ -46,6 +46,8 @@ TcpClient::TcpClient(QWidget *parent) :
     curChatter->setFixedHeight(50);
     curChatter->setStyleSheet("background: white; color: black;border-bottom: 1px solid rgb(230, 230, 255);");
     isOnline = true;
+    isGaming = false;
+    isInviting = false;
 
     QFont ft;
     ft.setPointSize(15);
@@ -1844,6 +1846,402 @@ void TcpClient::userLabelClicked(){
 }
 
 
+
+
+
+
+/*---------------------------------------------------------------------------------
+以下部分是关于邀请游戏和左侧显示栏的部分
+-----------------------------------------------------------------------------------*/
+
+//TODO
+void TcpClient::inGame()
+{
+    /*
+    提示某两个人进入了游戏（左侧用户栏显示在游戏中以及对象并隐藏或冻结邀请按钮），
+    然后如果其中一个人是你邀请的对象而另一个人不是，那么当前邀请的弹窗关闭，显示“对方已经接受别的邀请”
+    */
+    //注意：处于邀请他人的状态使用isInviting来标志，邀请对象为opponame
+    QString player_one_name = my_extend_packet_status.get_player_one_name();
+    QString player_two_name = my_extend_packet_status.get_player_two_name();
+    
+    if(isInviting && (player_one_name != username && player_two_name == opponame) || (player_one_name == opponame && player_two_name != username))
+    {
+        //TODO
+        //GUI部分，其中一个人是你邀请的对象而另一个人不是，那么当前邀请的弹窗关闭，显示“对方已经接受别的邀请”
+    }
+    else
+    {   
+        //TODO
+        //GUI部分，显示player1和player2的游戏状态，冻结邀请按钮（注意其中一人是自己的特殊情况）
+    }
+}
+
+//TODO
+void TcpClient::offGame()
+{
+    /*
+    提示某两个人结束了游戏（对于两人中的任意一个，若仍在线，左侧用户栏恢复其按钮）
+    */
+    QString player_one_name = my_extend_packet_status.get_player_one_name();
+    QString player_two_name = my_extend_packet_status.get_player_two_name();
+
+    //TODO
+    /*GUI部分，恢复两个人的邀请按钮, 注意特判其中一个人是自己的情况*/
+}
+
+//这是一个槽函数, 绑定的是邀请按钮
+//TODO
+void TcpClient::inviteGame()
+{
+    //TODO
+    /*
+    GUI部分，获得对方用户名opponame
+    */
+
+
+    //寻找是否有你邀请的对象，对于不是你邀请的对象，全部发送拒绝包
+    bool findOpponame = false;
+    for(auto name : invitingName)
+    {
+        if(name == opponame)
+            findOpponame = true;
+        else
+        {
+            rejectName = name;
+            sendDeclineInvitationPacket();
+        }
+    }
+    
+    //TODO
+    //GUI部分，关闭所有邀请的弹窗
+
+    if(findOpponame)
+    {
+        //由于你邀请的人也邀请了你，因此直接接受邀请
+        sendAcceptInvitationPacket();
+        return;
+    }
+    else
+    {
+        isInviting = true;//正在邀请opponame
+
+        //TODO
+        //GUI部分，隐藏主界面，并显示“正在邀请opponame", 要提供相应的选项
+    }
+
+    //发送一个请求对战包
+
+    PacketHead sendPacketHead;
+
+    sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
+    sendPacketHead.set_function_type(PacketHead::kExtendBuildAndDestroyInvite);
+    sendPacketHead.set_length(64);
+
+    //首先取出文本信息以便计算包长度
+    std::string usernameString = QStringToString(username);
+    std::string opponameString = QStringToString(opponame);
+
+    ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
+        stringPadding(usernameString, 32).c_str(), stringPadding(opponame, 32).c_str());
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
+}
+
+//TODO
+void TcpClient::showInvitation()
+{
+    //首先判断自己是否在游戏中(用状态isGaming标志），如果在游戏中那么就丢弃这个包，因为发送者会接收到inGame包，然后就知道接受了别人的邀请
+    if(isGaming) return;
+
+    //在邀请opponame的时候，有人邀请你，默认拒绝
+    inviteName = my_extend_packet_build_and_destroy.get_send_name();
+    if(isInviting)
+    {
+        rejectName = inviteName;
+        sendDeclineInvitationPacket();
+        return;
+    }
+
+    //TODO
+    //GUI部分，显示弹窗，同意或拒绝
+}
+
+
+/*---------------------------------------------------------------*/
+
+//向对端发送同意邀请包（这时候server会向所有用户发送ingame包）
+void TcpClient::sendAcceptInvitationPacket()
+{
+    PacketHead sendPacketHead;
+
+    sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
+    sendPacketHead.set_function_type(PacketHead::kExtendBuildAndDestroyAccept);
+
+    //首先取出文本信息以便计算包长度
+    std::string usernameString = QStringToString(username);
+    std::string opponameString = QStringToString(opponame);
+    sendPacketHead.set_length(64);
+
+    ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
+        stringPadding(usernameString, 32).c_str(), stringPadding(opponame, 32).c_str());
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
+}
+
+//这是一个槽函数，绑定的是“同意邀请”的按钮，另外inviteGame中也会调用
+//TODO
+void TcpClient::acceptInvitation()
+{
+    isInviting = false;
+    isGaming = true;
+
+    //TODO
+    //GUI部分，获得对方用户名opponame，关闭所有邀请的弹窗，游戏开始，可以摆放飞机
+
+    sendAcceptInvitationPacket();
+}
+
+/*---------------------------------------------------------------*/
+
+
+
+/*---------------------------------------------------------------*/
+
+void TcpClient::sendDeclineInvitationPacket()
+{
+    //向对端发送拒绝邀请包
+    PacketHead sendPacketHead;
+
+    sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
+    sendPacketHead.set_function_type(PacketHead::kExtendBuildAndDestroyReject);
+    sendPacketHead.set_length(64);
+
+    //首先取出文本信息以便计算包长度
+    std::string senderString = QStringToString(username);
+    std::string recvString = QStringToString(rejectName);
+
+    ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
+        stringPadding(senderString, 32).c_str(), stringPadding(recvString, 32).c_str());
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
+}
+
+//这是一个槽函数，绑定的是“拒绝邀请”的按钮，另外inviteGame中也会调用
+//TODO
+void TcpClient::declineInvitation()
+{
+    //TODO
+    //GUI部分，获得对方的用户名rejectName
+
+    sendDeclineInvitationPacket();
+}
+
+/*---------------------------------------------------------------*/
+
+//TODO
+void TcpClient::recvAcceptInvitation()
+{
+    //接收到同意邀请包
+    isInviting = false;
+    isGaming = true;
+
+    //TODO
+    //GUI部分，关闭所有邀请的弹窗，游戏开始，可以摆放飞机
+
+}
+
+//TODO
+void TcpClient::recvDeclineInvitation()
+{
+    //接收到拒绝邀请包
+    isInviting = false;
+
+    //TODO
+    //GUI部分，关闭“正在邀请opponame”的弹窗，然后回到主界面
+
+}
+
+
+//TODO
+void TcpClient::cancelGameActive()
+{
+    isGaming = false;
+
+    /*
+    主动取消游戏
+    回到主界面，恢复opponame的按钮
+    */
+
+    //向对端发送主动取消游戏包（这时候server会向所有用户发送offgame包）
+    PacketHead sendPacketHead;
+
+    sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
+    sendPacketHead.set_function_type(PacketHead::kExtendBuildAndDestroyCancel);
+    sendPacketHead.set_length(64);
+
+    //首先取出文本信息以便计算包长度
+    std::string usernameString = QStringToString(username);
+    std::string opponameString = QStringToString(opponame);
+
+    ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
+        stringPadding(usernameString, 32).c_str(), stringPadding(opponame, 32).c_str());
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
+}
+
+//TODO
+void TcpClient::cancelGamePassive()
+{
+    isGaming = false;
+    /*
+    被动取消游戏
+    显示“对方退出了游戏”
+    然后回到主界面，恢复opponame的按钮
+    */
+    
+}
+
+/*---------------------------------------------------------------------------------
+以下部分是摆飞机的部分
+左边显示的是oppoBoard，表示自己猜对方棋盘的进度
+右边显示的是myBoard，表示对方猜测自己棋盘的进度
+-----------------------------------------------------------------------------------*/
+
+//TODO
+void TcpClient::offensive()
+{
+    /*将状态转为先手，然后恢复oppoBoard棋盘（取消冻结）*/
+}
+
+void TcpClient::defensive()
+{
+    /*将状态转为后手，然后冻结oppoBoard棋盘*/
+}
+
+//TODO
+/*点击摆放完成按钮触发*/
+void TcpClient::gameReady()
+{
+    //GUI部分，摆放好了以后，首先先要判断三个位置是否合法，如果不合法要提示错误
+
+
+    //如果合法，发送gameReady包
+    PacketHead sendPacketHead;
+
+    sendPacketHead.set_packet_type(PacketHead::kExtendReady);
+    sendPacketHead.set_function_type(PacketHead::kExtendReadyPlayer);
+    sendPacketHead.set_length(0);
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendPacketHead.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
+}
+
+//TODO
+void TcpClient::gameStart()
+{
+    //接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
+}
+
+
+/*---------------------------------------------------------------------------------
+以下部分是对战的部分
+左边显示的是oppoBoard，表示自己猜对方棋盘的进度
+右边显示的是myBoard，表示对方猜测自己棋盘的进度
+-----------------------------------------------------------------------------------*/
+
+//TODO
+void TcpClient::askForPointState()
+{
+    //点击棋盘上的一个按钮，发送请求包，然后转为后手
+
+    //首先获取棋盘的坐标cord
+
+    defensive();
+}
+
+//TODO
+void TcpClient::replyPointState()
+{
+    //GUI部分，myBoard显示对方猜的位置和结果
+
+    //回复棋盘坐标和相应的状态，然后转为先手
+
+
+
+    offensive();
+}
+
+//TODO
+void TcpClient::recvReplyPointState(const unsigned short res)
+{
+    //GUI部分，oppoBoard显示自己猜测的结果
+
+
+}
+
+//TODO
+//点击“断言”按钮后触发
+void TcpClient::assertPlanePos()
+{
+    //GUI部分，获取飞机的位置
+
+    //发送断言包
+
+
+
+    defensive();
+}
+
+//TODO
+void TcpClient::replyAssertPlanePos()
+{
+    //GUI部分，显示对方的断言位置
+
+    //判断是否猜中并发送回复断言包
+
+
+
+    offensive();
+}
+
+//TODO
+void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
+{
+    //GUI部分，显示断言结果，如果猜中要将整个飞机显示出来，否则显示断言错误（比如闪烁几下）
+
+}
+
+//TODO
+void TcpClient::gameOver()
+{
+    /*
+    游戏结束状态
+    */
+}
+
+
+
+
 // 接受到包的处理，状态机 （FINISHED)
 void TcpClient::readyRead(){
     qDebug() << "reading...";
@@ -1983,6 +2381,93 @@ void TcpClient::readyRead(){
                         current_read_state = READ_C2C_FILE_DATA;
                         current_byte_num_to_read = my_packet_head.get_length();
                         break;
+
+                    /*----------------------------------------------------------------------
+                    Extend包的报头读入
+                    -------------------------------------------------------------------------*/
+
+                    case PacketHead::kExtendStatus://游戏状态包
+                        switch(my_packet_head.get_function_type())
+                        {
+                            case PacketHead::kExtendStatusInGame://ingame包
+                                current_read_state = READ_EXTEND_STATUS_IN_GAME;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            case PacketHead::kExtendStatusOffGame://offgame包
+                                current_read_state = READ_EXTEND_STATUS_OFF_GAME;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            default:
+                                qDebug() << "switch kExtendStatus my_packet_head.get_function_type() case lost";
+                        }
+                        break;
+
+                    case PacketHead::kExtendBuildAndDestroy://玩家邀请创建对局或者中途退出销毁对局时使用
+                        switch(my_packet_head.get_function_type())
+                        {
+                            case PacketHead::kExtendBuildAndDestroyInvite://发起对局邀请包
+                                current_read_state = READ_EXTEND_BUILD_AND_DESTROY_INVITE:
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            case PacketHead::kExtendBuildAndDestroyAccept://接受对局邀请包
+                                current_read_state = READ_EXTEND_BUILD_AND_DESTROY_ACCEPT;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            case PacketHead::kExtendBuildAndDestroyReject://拒绝对局邀请包
+                                current_read_state = READ_EXTEND_BUILD_AND_DESTROY_REJECT;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            case PacketHead::kExtendBuildAndDestroyCancel://中途取消对局包
+                                current_read_state = READ_EXTEND_BUILD_AND_DESTROY_CANCEL;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            default:
+                                qDebug() << "switch kExtendBuildAndDestroy my_packet_head.get_function_type() case lost";
+                        }
+
+                    case PacketHead::kExtendReady://准备游戏包
+                        switch(my_packet_head.get_function_type())
+                        {
+                            case PacketHead::kExtendBegin://对局开始包
+                                gameStart();
+                                break;
+                            case PacketHead::kExtendBeginOffensive://先手开始游戏包
+                                offensive();
+                                break;
+                            case PacketHead::kExtendReadyDeffensive://后手开始游戏包
+                                defensive();
+                                break;
+                            default:
+                                qDebug() << "switch kExtendReady my_packet_head.get_function_type() case lost";
+                        }
+                    
+                    case PacketHead::kExtendPredict://猜测包
+                        switch(my_packet_head.get_function_type())
+                        {
+                            case PacketHead::kExtendPredictGuess://猜测位置包
+                                current_read_state = READ_EXTEND_PREDICT_GUESS;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            case PacketHead::kExtendPredictJudge://断言位置包
+                                current_read_state = READ_EXTEND_PREDICT_JUDGE;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
+                            default:
+                                qDebug() << "switch kExtendPredict my_packet_head.get_function_type() case lost";
+                        }
+
+                    case PacketHead::kExtendReplyPre://回复预测包
+                        switch(my_packet_head.get_function_type())
+                        {
+                            case PacketHead::kExtendReplyPreNo://猜测未命中
+                            case PacketHead::kExtendReplyPreHurt://猜测伤飞机
+                            case PacketHead::kExtendReplyPreDestroy://猜测毁飞机
+                                recvReplyPointState(my_packet_head.get_function_type());
+                                break;
+                            case PacketHead::kExtendReplyPreFail://断言未中
+                            case PacketHead::kExtendReplyPreSuccess://断言命中
+                                recvReplyAssertPlanePos(my_packet_head.get_function_type());
+                        }
                     default:
                         qDebug() << "switch my_packet_head.get_packet_type() case lost";
                 }
@@ -2070,6 +2555,52 @@ void TcpClient::readyRead(){
                 current_byte_num_to_read = kPacketHeadLen;
                 break;
 
+            /*----------------------------------------------------------------------
+            Extend包的额外状态
+            -------------------------------------------------------------------------*/
+
+            case READ_EXTEND_STATUS_IN_GAME:
+                my_extend_packet_status.set_string(my_packet_head, set_byte_array.constData());
+                inGame();//某两个人进入游戏
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+
+            case READ_EXTEND_STATUS_OFF_GAME:
+                my_extend_packet_status.set_string(my_packet_head, set_byte_array.constData());
+                offGame();//某两个人退出游戏
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+
+            case READ_EXTEND_BUILD_AND_DESTROY_INVITE:
+                my_extend_packet_build_and_destroy.set_string(my_packet_head, set_byte_array.constData());
+                showInvitation();//展示邀请
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+
+            case READ_EXTEND_BUILD_AND_DESTROY_ACCEPT:
+                my_extend_packet_build_and_destroy.set_string(my_packet_head, set_byte_array.constData());
+                recvAcceptInvitation();//对方接收了您的邀请
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+
+            case READ_EXTEND_BUILD_AND_DESTROY_REJECT:
+                my_extend_packet_build_and_destroy.set_string(my_packet_head, set_byte_array.constData());
+                recvDeclineInvitation();//对方拒绝了您的邀请
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+                
+            case READ_EXTEND_BUILD_AND_DESTROY_CANCEL:
+                my_extend_packet_build_and_destroy.set_string(my_packet_head, set_byte_array.constData());
+                cancelGamePassive();//对方取消了游戏
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+                
             default:
                 qDebug() << "switch current_read_state case lost";
         }
