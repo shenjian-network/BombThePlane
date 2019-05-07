@@ -11,6 +11,7 @@
 #include <QNetworkConfigurationManager>
 #include <map>
 #include <QQueue>
+#include <QMessageBox>
 #include "../common/client_to_server.h"
 #include "../common/packet_head.h"
 #include "../common/extend_packet.h"
@@ -85,9 +86,9 @@ public:
 
     void successGUI(const QString& err);
 
-    void inviteBoxGUI(const QString& err);
+    void inviteSrcGUI(const QString& name);
 
-    void inviteShowGUI(const QString& err);
+    void inviteDstGUI(const QString& name);
 
     //显示更改密码成功窗口
     void changePwdSuccessGUI();
@@ -134,7 +135,7 @@ public:
 
     void getCheckState(QVector<bool>& vecIsChecked,  QVector<QString>& vecName);
 
-    void setUserStatus(QString name, bool isOnline);
+    void setUserStatus(QString name, bool isOnline, bool isInGame);
 
     void showTextImpl(QString name, QString msg, QString tm, bool isMyself=false);
 
@@ -346,6 +347,12 @@ private:
     bool isInviting;
 
     QQueue<QString> invitingName;
+
+
+    // BOX
+    QMessageBox * inviteSrcBox;  // 发出的邀请，一次只能一个
+    QVector<QMessageBox*> inviteDstBoxList;   // 邀请列表，能够接收到多个
+    QMap <QAbstractButton*, QString> box2opponame; // 邀请人的名字
 };
 
 #endif // TCPCLIENT_H

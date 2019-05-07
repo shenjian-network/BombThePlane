@@ -270,19 +270,21 @@ void TcpClient::successGUI(const QString& err){
     reply = QMessageBox::information(this, tr("成功"), err);
 }
 
-void TcpClient::inviteBoxGUI(const QString& err) {
-    QMessageBox box(QMessageBox::Information, "Waiting...", err);
-    box.setStandardButtons(QMessageBox::Cancel);
-    connect(box.button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(cancelGameActive()), Qt::QueuedConnection);
-    box.exec();
+void TcpClient::inviteSrcGUI(const QString& name) {
+    inviteSrcBox = new QMessageBox(QMessageBox::Information, "Waiting...", "正在邀请" + name);
+    inviteSrcBox->setStandardButtons(QMessageBox::Cancel);
+    connect(inviteSrcBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(cancelGameActive()), Qt::QueuedConnection);
+    inviteSrcBox->exec();
 }
 
-void TcpClient::inviteShowGUI(const QString& err){
-    QMessageBox box(QMessageBox::Information, "邀请", err);
-    box.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-//    connect(box.button(QMessageBox::Ok), SIGNAL(clicked()), this, SLOT(()), Qt::QueuedConnection);
-//    connect(box.button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(()), Qt::QueuedConnection);
-    box.exec();
+void TcpClient::inviteDstGUI(const QString& name){
+    auto inviteDstBox = new QMessageBox(QMessageBox::Information, "邀请", name + "邀请你加入游戏");
+    inviteDstBox->setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    connect(inviteDstBox->button(QMessageBox::Ok), SIGNAL(clicked()), this, SLOT(acceptInvitation()), Qt::QueuedConnection);
+    connect(inviteDstBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(declineInvitation()), Qt::QueuedConnection);
+    inviteDstBoxList.push_back(inviteDstBox);
+    box2opponame[inviteDstBox->button(QMessageBox::Ok)] = name;
+    inviteDstBox->exec();
 }
 
 // 显示聊天室的新窗口，用于聊天(FINISHED)
@@ -531,7 +533,7 @@ void TcpClient::offline(){
             }
         }
 
-        setUserStatus(name, false);
+        setUserStatus(name, false, false);
     }
 }
 
@@ -540,7 +542,7 @@ void TcpClient::offline(){
 void TcpClient::online(){
     QString name = my_server_to_client_inform.get_user_name();
 
-    setUserStatus(name, true);
+    setUserStatus(name, true, false);
 }
 
 // 清屏，清除对话框的内容 （FINISHED）
@@ -1266,7 +1268,7 @@ void TcpClient::getCheckState(QVector<bool>& vecIsChecked,  QVector<QString>& ve
 }
 
 // 设置用户名的状态 (FINISHED)
-void TcpClient::setUserStatus(QString name, bool isOnline){
+void TcpClient::setUserStatus(QString name, bool isOnline, bool isInGame){
     int count = userList->count();
 
     QListWidgetItem * item;
@@ -1288,12 +1290,22 @@ void TcpClient::setUserStatus(QString name, bool isOnline){
         if(curName == name){
             flag = true;
             if(isOnline){
-                button->setEnabled(true);
-                button->setText("邀请");
-                box->setEnabled(true);
-                box->setStyleSheet("QLabel{background: rgb(46, 50, 56)}"
-                                         "QLabel{color: rgb(255, 255, 255)}"
-                                         "QLabel:hover{background: rgb(58,63,69)}");
+                if(!isInGame){
+                    button->setEnabled(true);
+                    button->setText("邀请");
+                    box->setEnabled(true);
+                    box->setStyleSheet("QLabel{background: rgb(46, 50, 56)}"
+                                             "QLabel{color: rgb(255, 255, 255)}"
+                                             "QLabel:hover{background: rgb(58,63,69)}");
+                } else {
+                    button->setEnabled(false);
+                    button->setText("游戏中");
+                    box->setEnabled(false);
+                    box->setStyleSheet("QLabel{background: rgb(46, 50, 56)}"
+                                        "QLabel:hover{background: rgb(58,63,69)}"
+                                        "QLabel{color: rgb(128, 128, 128)}");
+                }
+
             } else {
                 button->setEnabled(false);
                 button->setText("离线");
@@ -1856,11 +1868,17 @@ void TcpClient::inGame()
     {
         //TODO
         //GUI部分，其中一个人是你邀请的对象而另一个人不是，那么当前邀请的弹窗关闭，显示“对方已经接受别的邀请”
+        inviteSrcBox->close();
+        errorGUI("对方已接受别人的邀请");
     }
     else
     {   
         //TODO
         //GUI部分，显示player1和player2的游戏状态，冻结邀请按钮（注意其中一人是自己的特殊情况）
+        if(player_one_name != username)
+            setUserStatus(player_one_name, true, false);
+        if(player_two_name != username)
+            setUserStatus(player_two_name, true, false);
     }
 }
 
@@ -1875,6 +1893,10 @@ void TcpClient::offGame()
 
     //TODO
     /*GUI部分，恢复两个人的邀请按钮, 注意特判其中一个人是自己的情况*/
+    if(player_one_name != username)
+        setUserStatus(player_one_name, true, false);
+    if(player_two_name != username)
+        setUserStatus(player_one_name, true, false);
 }
 
 //这是一个槽函数, 绑定的是邀请按钮
@@ -1908,6 +1930,12 @@ void TcpClient::inviteGame()
     invitingName.clear();
     //TODO
     //GUI部分，关闭所有邀请的弹窗
+    for(auto box: inviteDstBoxList) {
+        box->close();
+        delete box;
+    }
+    inviteDstBoxList.clear();
+
 
     if(findOpponame)
     {
@@ -1921,7 +1949,7 @@ void TcpClient::inviteGame()
 
         //FINISH
         //GUI部分，隐藏主界面，并显示“正在邀请opponame", 要提供相应的选项
-        inviteBoxGUI("正在邀请" + opponame);
+        inviteSrcGUI(opponame);
     }
 
     //发送一个请求对战包
@@ -1964,7 +1992,7 @@ void TcpClient::showInvitation()
     invitingName.push_back(inviteName);
     //TODO
     //GUI部分，显示弹窗，同意或拒绝
-    inviteShowGUI(inviteName + "邀请你加入游戏");
+    inviteDstGUI(inviteName);
 }
 
 
@@ -2002,6 +2030,15 @@ void TcpClient::acceptInvitation()
 
     //TODO
     //GUI部分，获得对方用户名opponame，关闭所有邀请的弹窗，游戏开始，可以摆放飞机
+    QObject * object = QObject::sender();
+    QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
+
+    opponame = box2opponame[button];
+    for(auto box: inviteDstBoxList) {
+        box->close();
+        delete box;
+    }
+    inviteDstBoxList.clear();
 
     sendAcceptInvitationPacket();
 }
