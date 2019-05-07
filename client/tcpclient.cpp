@@ -1977,8 +1977,10 @@ void TcpClient::inviteGame()
 //TODO
 void TcpClient::showInvitation()
 {
+     qDebug() << inviteName << "邀请1" << "\n";
     //首先判断自己是否在游戏中(用状态isGaming标志），如果在游戏中那么就丢弃这个包，因为发送者会接收到inGame包，然后就知道接受了别人的邀请
     if(isGaming) return;
+     qDebug() << inviteName << "邀请2" << "\n";
 
     //在邀请opponame的时候，有人邀请你，默认拒绝
     inviteName = my_extend_packet_build_and_destroy.get_send_name();
@@ -1988,10 +1990,12 @@ void TcpClient::showInvitation()
         sendDeclineInvitationPacket();
         return;
     }
+     qDebug() << inviteName << "邀请3" << "\n";
 
     invitingName.insert(inviteName);
     //TODO
     //GUI部分，显示弹窗，同意或拒绝
+
     inviteDstGUI(inviteName);
 }
 
@@ -2468,6 +2472,7 @@ void TcpClient::readyRead(){
                             default:
                                 qDebug() << "switch kExtendBuildAndDestroy my_packet_head.get_function_type() case lost";
                         }
+                    break;
 
                     case PacketHead::kExtendReady://准备游戏包
                         switch(my_packet_head.get_function_type())
@@ -2484,6 +2489,7 @@ void TcpClient::readyRead(){
                             default:
                                 qDebug() << "switch kExtendReady my_packet_head.get_function_type() case lost";
                         }
+                    break;
                     
                     case PacketHead::kExtendPredict://猜测包
                         switch(my_packet_head.get_function_type())
@@ -2499,6 +2505,7 @@ void TcpClient::readyRead(){
                             default:
                                 qDebug() << "switch kExtendPredict my_packet_head.get_function_type() case lost";
                         }
+                    break;
 
                     case PacketHead::kExtendReplyPre://回复预测包
                         switch(my_packet_head.get_function_type())
@@ -2511,9 +2518,13 @@ void TcpClient::readyRead(){
                             case PacketHead::kExtendReplyPreFail://断言未中
                             case PacketHead::kExtendReplyPreSuccess://断言命中
                                 recvReplyAssertPlanePos(my_packet_head.get_function_type());
+                            break;
+                            default:
+                                 qDebug() << "switch kExtendReplyPre my_packet_head.get_function_type() case lost";
                         }
                     default:
                         qDebug() << "switch my_packet_head.get_packet_type() case lost";
+
                 }
                 break;
             case READ_SERVER_TO_CLIENT_REPORT_SUCCESS://报道成功,收到额外信息（见协议栈），进行进一步判断
