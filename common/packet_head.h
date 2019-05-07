@@ -89,6 +89,7 @@ public:
     static const unsigned short kExtendBuildAndDestroyAccept=0x01;//接受对局邀请
     static const unsigned short kExtendBuildAndDestroyReject=0x02;//拒绝对局邀请
     static const unsigned short kExtendBuildAndDestroyCancel=0x03;//中途取消对局
+    static const unsigned short kExtendBuildAndDestroyNotStart=0x04;//未建立游戏便取消对局
     /* Prepare For Game */
     static const unsigned short kExtendReady=0x17; // 准备就绪
     static const unsigned short kExtendReadyPlayer=0x00; // 准备就绪 

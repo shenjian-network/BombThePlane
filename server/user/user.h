@@ -124,14 +124,14 @@ private:
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ServerToClientBase* CreateRetInGame(User& player_one,User& player_two,bool is_in_game=true);
     ServerToClientBase* CreateRetPre(bool is_pre);
-    void ClientBuildBase(const int& client,const PacketHead& p,const char* b);
+    void ClientBuildBase(const int& client,const PacketHead& p,const char* b,int type);
     void ClientBuildAcceptAndCancel(const int& client,const PacketHead& p,const char* b,bool is_acc);
     //prepare
     void ClientPrepareStage(const int& client,const PacketHead& p,const char* b);
     //predict
-    void ClientPredict(const int& client,const PacketHead& p,const char* b);
+    void ClientPredict(const int& client,const PacketHead& p,const char* b,bool type);
     //playing
-    void ClientToRival(const int& client,const PacketHead& p,const char* b);
+    void ClientToRival(const int& client,const PacketHead& p,const char* b,int type);
     void ClientHit(const int& client,const PacketHead& p,const char* b);
     //Game over
     void ClientGameOver(const int& client,const PacketHead& p,const char* b);

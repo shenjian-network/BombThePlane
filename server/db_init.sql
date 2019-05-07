@@ -1,7 +1,7 @@
 set names utf8;
-drop database if exists db1652310;
-create database db1652310 charset=utf8 collate=utf8_bin;
-use db1652310;
+drop database if exists db1652335;
+create database db1652335 charset=utf8 collate=utf8_bin;
+use db1652335;
 drop table if exists user_info;
 drop table if exists inteflow_info;
 drop table if exists text_contain;
