@@ -14,7 +14,7 @@
 #include "../common/packet_head.h"
 #include "../common/server_to_client.h"
 #include "clickablelabel.h"
-
+#include "board.h"
 
 
 namespace Ui {
@@ -208,6 +208,8 @@ private slots:
 
     void cancelSendFileDataActive();//send主动取消发送（GUI触发）
 
+    void on_inviteGameBtn_clicked();
+
 private:
     PacketHead my_packet_head;
     ServerToClientReportSuccess my_server_to_client_report_success;
@@ -253,6 +255,9 @@ private:
     int fileLen;
 
     bool isOnline;
+
+    Board * my_board;
+    Board * oppo_board;
 };
 
 #endif // TCPCLIENT_H

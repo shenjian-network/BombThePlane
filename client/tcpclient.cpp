@@ -1174,6 +1174,8 @@ void TcpClient::insertListWidget(QString name, bool isOnline, bool isInGame){
         show_button_text = "离线";
     }
 
+    connect(button, SIGNAL(clicked()), this, SLOT(on_inviteGameBtn_clicked()), Qt::QueuedConnection);
+
     button->setText(show_button_text);
     button->setFlat(true);
     button->setMaximumHeight(30);
@@ -1186,7 +1188,7 @@ void TcpClient::insertListWidget(QString name, bool isOnline, bool isInGame){
     layout->setSpacing(0);
 
     user->setLayout(layout);
-//    InitRightLayout();
+    InitRightLayout();
 
     user2Index.insert(name, ++index);
 
@@ -1366,6 +1368,7 @@ void TcpClient::showTextImpl(QString name, QString msg, QString tm, bool isMysel
 }
 
 
+// TODO: 游戏主界面，需要重写
 void TcpClient::InitRightLayout(){
     QWidget * right = new QWidget;
 
@@ -1383,48 +1386,9 @@ void TcpClient::InitRightLayout(){
 
     rightLayout->addWidget(label);
 
-    QTextBrowser * textfield = new QTextBrowser;
-    textfield->setStyleSheet("border:0px; border-bottom: 1px solid rgb(230,230,250);");
-    rightLayout->addWidget(textfield);
+    my_board = new Board();
+    rightLayout->addWidget(my_board);
 
-    QWidget * textEditArea = new QWidget;
-
-    QPlainTextEdit * textedit = new QPlainTextEdit;
-    textedit->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    textedit->setStyleSheet("border:0px; color: black;");
-    textedit->setParent(textEditArea);
-    textedit->setGeometry(0, 0, 530, 200);
-    ft.setPointSize(12);
-    textedit->setFont(ft);
-
-    QPushButton * send = new QPushButton("Send");
-    send->setStyleSheet("QPushButton:hover{background: rgb(248, 248, 248);}");
-    send->setFixedSize(95, 30);
-    send->setGeometry(415, 130, 95, 30);
-    send->setParent(textEditArea);
-    send->setShortcut(Qt::Key_F1);
-
-    connect(send, SIGNAL(clicked()),  this, SLOT(on_sendBtn_clicked()), Qt::QueuedConnection);
-
-    QPushButton * review = new QPushButton("Review");
-    review->setStyleSheet("QPushButton:hover{background: rgb(248, 248, 248);}");
-    review->setFixedSize(95, 30);
-    review->setGeometry(300, 130, 95, 30);
-    review->setParent(textEditArea);
-
-    connect(review, SIGNAL(clicked()),  this, SLOT(cls()), Qt::QueuedConnection);
-
-    QPushButton * file = new QPushButton("File");
-    file->setStyleSheet("QPushButton:hover{background: rgb(248, 248, 248);}");
-    file->setFixedSize(95, 30);
-    file->setGeometry(185, 130, 95, 30);
-    file->setParent(textEditArea);
-
-    connect(file, SIGNAL(clicked()),  this, SLOT(on_fileDialogBtn_clicked()), Qt::QueuedConnection);
-
-    rightLayout->addWidget(textEditArea);
-    rightLayout->setStretchFactor(textfield, 2);
-    rightLayout->setStretchFactor(textEditArea, 1);
     rightLayout->setMargin(0);
     rightLayout->setSpacing(0);
 
@@ -1837,8 +1801,8 @@ void TcpClient::userLabelClicked(){
     curIndex = index;
     rightStackLayout->setCurrentIndex(index);
     qDebug() << index;
-//    QLabel* label = static_cast<QLabel*>(rightStackLayout->currentWidget()->layout()->itemAt(0)->widget());
-//    label->setText(user->text());
+    QLabel* label = static_cast<QLabel*>(rightStackLayout->currentWidget()->layout()->itemAt(0)->widget());
+    label->setText(user->text());
 
     qDebug() << "点击了" << user->text() << " Index:" << index;
 }
@@ -2094,4 +2058,10 @@ void TcpClient::on_fileDialogBtn_clicked(){
 
 
     tryToSend(filename);
+}
+
+
+// TODO: 邀请游戏
+void TcpClient::on_inviteGameBtn_clicked() {
+
 }
