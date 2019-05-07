@@ -78,6 +78,7 @@ class ExtendPacketReady:public ExtendPacketBase
 public:
     ExtendPacketReady();
     ExtendPacketReady(const PacketHead& ph,const unsigned short* locs,const unsigned short* locb);
+    ExtendPacketReady(const PacketHead& ph);
     ~ExtendPacketReady() {}
     void get_string(char* s);
     unsigned short* get_loc_small();
