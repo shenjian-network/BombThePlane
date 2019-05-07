@@ -124,6 +124,9 @@ ExtendPacketReady::ExtendPacketReady(const PacketHead& ph,const unsigned short* 
         loc_big[i]=locb[i];
     }
 }
+ExtendPacketReady::ExtendPacketReady(const PacketHead& ph):ExtendPacketBase(ph)
+{
+}
 void ExtendPacketReady::get_string(char* s)
 {
     ExtendPacketBase::get_string(s);

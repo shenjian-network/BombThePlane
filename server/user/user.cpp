@@ -1171,7 +1171,7 @@ void UserManager::ClientFileOnlineData(const int& client,const PacketHead& p,con
     return;
 }
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void UserManager::ClientBuildBase(const int& client,const PacketHead& p,const char* b)
+void UserManager::ClientBuildBase(const int& client,const PacketHead& p,const char* b,bool type)
 {
     ExtendPacketBuildAndDestroy *c_pack;
     c_pack = new ExtendPacketBuildAndDestroy();
@@ -1179,6 +1179,10 @@ void UserManager::ClientBuildBase(const int& client,const PacketHead& p,const ch
     vector<User>::iterator uit;
     uit=find(my_clients.begin(),my_clients.end(),c_pack->get_receive_name());
     uit->SendMessage((ServerToClientBase*)c_pack);
+    if(type)
+        xl.appendlog_game("A reject B",c_pack->get_send_name(),c_pack->get_receive_name(), "","",0);
+    else
+        xl.appendlog_game("A invite B",c_pack->get_send_name(),c_pack->get_receive_name(), "","",0);
     delete c_pack;
     return;   
 }
@@ -1199,6 +1203,10 @@ void UserManager::ClientBuildAcceptAndCancel(const int& client,const PacketHead&
     uitb->set_no_field(uita-my_clients.begin());
     uitb->SendMessage((ServerToClientBase*)c_pack);
     pack_set_ret=CreateRetInGame((*uita),(*uitb),is_acc);
+    if(is_acc)
+        xl.appendlog_game("A and B build game",c_pack->get_send_name(),c_pack->get_receive_name(), "","",0);
+    else 
+        xl.appendlog_game("A cancels game",c_pack->get_send_name(),c_pack->get_receive_name(), "","",0);
     for(auto cu:my_clients) 
     {
         if(cu.get_user_status()) {
@@ -1218,13 +1226,21 @@ void UserManager::ClientPrepareStage(const int& client,const PacketHead& p,const
     User *bu;
     User *tmpu;
     ExtendPacketReady* read_pack;
+    read_pack=new ExtendPacketReady();
+    char logs[40];
+    read_pack->set_string(p,b);
+    unsigned short* t1=read_pack->get_loc_small();
+    unsigned short* t2=read_pack->get_loc_big();
     uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
     uit->set_score(0);
     au=&(*uit);
     bu=&my_clients[uit->get_no_field()];
+    sprintf(logs, "%x,%x;%x,%x;%x,%x", t1[0],t2[0],t1[1],t2[1],t1[2],t2[2]);
+    xl.appendlog_game("A is ready",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "initial",logs,1);
     if(!my_clients[uit->get_no_field()].get_score()) {
         ServerToClientBase *pack_pre=CreateRetPre(true);
         ServerToClientBase *pack_post=CreateRetPre(false);
+        xl.appendlog_game("A and B build game",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "","",0);
         if(rand()%2) {
             tmpu=au;
             au=bu;
@@ -1235,44 +1251,67 @@ void UserManager::ClientPrepareStage(const int& client,const PacketHead& p,const
         delete pack_pre;
         delete pack_post;
     }
-    read_pack=new ExtendPacketReady();
-    read_pack->set_string(p,b);
     //log
     return;
 }
 //predict
-void UserManager::ClientPredict(const int& client,const PacketHead& p,const char* b)
+void UserManager::ClientPredict(const int& client,const PacketHead& p,const char* b,bool type)
 {
     vector<User>::iterator uit;
     uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
     ExtendPacketPlaying* pack_rec=new ExtendPacketPlaying();
     pack_rec->set_string(p,b);
     my_clients[uit->get_no_field()].SendMessage((ServerToClientBase*)pack_rec);
+    char logs[30];
+    sprintf(logs, "%x,%x",pack_rec->get_loc_small(),pack_rec->get_loc_big());
+    if(type)
+        xl.appendlog_game("A guess",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "loc",logs,1);
+    else 
+        xl.appendlog_game("A judge",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "loc",logs,1);
     delete pack_rec;
     return;    
 }
 //playing
-void UserManager::ClientToRival(const int& client,const PacketHead& p,const char* b)
+void UserManager::ClientToRival(const int& client,const PacketHead& p,const char* b,int type)
 {
     vector<User>::iterator uit;
     uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
     ExtendPacketBase* pack_rec=new ExtendPacketBase();
     pack_rec->set_string(p,b);
     my_clients[uit->get_no_field()].SendMessage((ServerToClientBase*)pack_rec);
+    if(type==0)
+    {
+        xl.appendlog_game("B guess miss",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "","",0);
+    }
+    else if(type==1)
+    {
+        xl.appendlog_game("B guess hurt",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "","",0);
+    }
+    else if(type==2)
+    {
+        xl.appendlog_game("B guess destroy",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "","",0);
+    }
+    else if(type==3)
+    {
+        xl.appendlog_game("B judge fail",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "","",0);
+    }
     delete pack_rec;
     return;     
 }
 void UserManager::ClientHit(const int& client,const PacketHead& p,const char* b)
 {
-    ClientToRival(client,p,b);
+    ClientToRival(client,p,b,4);
     vector<User>::iterator uit;
     uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
     my_clients[uit->get_no_field()].set_score(my_clients[uit->get_no_field()].get_score()+1);
+    char logs[30];
+    sprintf(logs, "%d:%d", uit->get_score(),my_clients[uit->get_no_field()].get_score());
+    xl.appendlog_game("B judge hit",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "score",logs,1);
 }
 //Game over
 void UserManager::ClientGameOver(const int& client,const PacketHead& p,const char* b)
 {
-    ClientToRival(client,p,b);
+    ClientToRival(client,p,b,4);
     ServerToClientBase *pack_off_ret;
     vector<User>::iterator uit;
     uit=find(my_clients.begin(),my_clients.end(),my_links[client].get_user_name());
@@ -1286,6 +1325,7 @@ void UserManager::ClientGameOver(const int& client,const PacketHead& p,const cha
     // judge by clients todo
     uit->set_is_playing(false);
     my_clients[uit->get_no_field()].set_is_playing(false);
+    xl.appendlog_game("B WIN",uit->get_user_name(),my_clients[uit->get_no_field()].get_user_name(), "","",0);
 }
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //主要流程
@@ -1473,7 +1513,7 @@ void UserManager::ProvideService()
                             {
                             case PacketHead::kExtendBuildAndDestroyInvite:
                             {
-                                ClientBuildBase(i,rec_head,buffer);
+                                ClientBuildBase(i,rec_head,buffer,false);
                                 break;
                             }
                             case PacketHead::kExtendBuildAndDestroyAccept:
@@ -1483,7 +1523,7 @@ void UserManager::ProvideService()
                             }
                             case PacketHead::kExtendBuildAndDestroyReject:
                             {
-                                ClientBuildBase(i,rec_head,buffer);
+                                ClientBuildBase(i,rec_head,buffer,true);
                                 break;
                             }
                             case PacketHead::kExtendBuildAndDestroyCancel:
@@ -1520,12 +1560,12 @@ void UserManager::ProvideService()
                             {
                             case PacketHead::kExtendPredictGuess:
                             {
-                                ClientPredict(i,rec_head,buffer);
+                                ClientPredict(i,rec_head,buffer,1);
                                 break;
                             }
                             case PacketHead::kExtendPredictJudge:
                             {
-                                ClientPredict(i,rec_head,buffer);
+                                ClientPredict(i,rec_head,buffer,0);
                                 break;
                             }
                             default: 
@@ -1541,22 +1581,22 @@ void UserManager::ProvideService()
                             {
                             case PacketHead::kExtendReplyPreNo:
                             {
-                                ClientToRival(i,rec_head,buffer);
+                                ClientToRival(i,rec_head,buffer,0);
                                 break;
                             }
                             case PacketHead::kExtendReplyPreHurt:
                             {
-                                ClientToRival(i,rec_head,buffer);
+                                ClientToRival(i,rec_head,buffer,1);
                                 break;
                             }
                             case PacketHead::kExtendReplyPreDestroy:
                             {
-                                ClientToRival(i,rec_head,buffer);
+                                ClientToRival(i,rec_head,buffer,2);
                                 break;
                             }
                             case PacketHead::kExtendReplyPreFail:
                             {
-                                ClientToRival(i,rec_head,buffer);
+                                ClientToRival(i,rec_head,buffer,3);
                                 break;
                             }
                             case PacketHead::kExtendReplyPreSuccess:
@@ -1638,6 +1678,8 @@ int main(int argc,char* argv[])
         errorPrompt();
         return -1;
     }
+    //appendlog_game(event_name,player_one_name,plyer_two_name, add_node,add_content,is_add);
+    //xl.appendlog_game("event","zyc","mlc", "score","1:3",1);
     my_port=atoi(argv[2]); 
     creat_daemon();
     srand((unsigned)time(NULL));

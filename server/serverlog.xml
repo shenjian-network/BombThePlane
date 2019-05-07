@@ -1,8 +1,2 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<Logs number="1">
-    <Log Event="sql select" Time="Tue May  7 19:25:13 2019">
-        <table_name>user_info</table_name>
-        <operation>select all user name</operation>
-        <select_num>2</select_num>
-    </Log>
-</Logs>
+<Logs number="0" />

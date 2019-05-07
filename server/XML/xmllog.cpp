@@ -940,3 +940,58 @@ void XmlLog::appendlog_user_askfor_text(const char *username, const char *result
 
     mydoc.SaveFile(xmlfile);
 }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+//添加游戏日志
+void XmlLog::appendlog_game(const char* event_name,const char *player_one_name,const char* player_two_name, const char* add_node,const char* add_content,bool is_add)
+{
+    TiXmlDocument mydoc(xmlfile);   //xml文档对象
+    bool loadOk = mydoc.LoadFile(); //加载文档
+    if (!loadOk)
+    {
+        cout << "could not load the test file.Error:" << mydoc.ErrorDesc() << endl;
+        exit(1);
+    }
+
+    TiXmlElement *RootElement = mydoc.RootElement(); //获取根元素
+    TiXmlAttribute *p = RootElement->FirstAttribute();
+    char s[10];
+    strcpy(s, p->Value());
+    int num = atoi(s);
+    num++;
+    RootElement->SetAttribute("number", num);
+
+    //获取时间
+    time_t now = time(0);
+    // 把 now 转换为字符串形式
+    char dt[25];
+    memcpy(dt, ctime(&now), 24);
+    dt[24] = '\0';
+
+    TiXmlElement *LogElement = new TiXmlElement("Log");
+    LogElement->SetAttribute("Event", event_name );
+    LogElement->SetAttribute("Time", dt);
+    RootElement->LinkEndChild(LogElement); //父节点写入文档
+
+    TiXmlElement *subElement;
+    TiXmlText *Content;
+
+    subElement = new TiXmlElement("playerA");
+    LogElement->LinkEndChild(subElement);
+    Content = new TiXmlText(player_one_name);
+    subElement->LinkEndChild(Content);
+
+    subElement = new TiXmlElement("playerB");
+    LogElement->LinkEndChild(subElement);
+    Content = new TiXmlText(player_two_name);
+    subElement->LinkEndChild(Content);
+
+    if(is_add) {
+        subElement = new TiXmlElement(add_node);
+        LogElement->LinkEndChild(subElement);
+        Content = new TiXmlText(add_content);
+        subElement->LinkEndChild(Content);
+    }
+
+    mydoc.SaveFile(xmlfile);
+}
