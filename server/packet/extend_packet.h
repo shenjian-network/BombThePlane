@@ -69,4 +69,26 @@ private:
     unsigned short loc_small;
     unsigned short loc_big; 
 };
+
+/*准备游戏包*/
+//UPDATE
+
+class ExtendPacketReady:public ExtendPacketBase
+{
+public:
+    ExtendPacketReady();
+    ExtendPacketReady(const PacketHead& ph,const unsigned short* locs,const unsigned short* locb);
+    ~ExtendPacketReady() {}
+    void get_string(char* s);
+    unsigned short* get_loc_small();
+    unsigned short* get_loc_big();
+    void set_string(const PacketHead& ph,const char* s);  
+private:
+    //PacketHead my_head;
+    static const int loc_num=3;
+    unsigned short loc_small[loc_num];
+    unsigned short loc_big[loc_num];
+};
+
+
 #endif

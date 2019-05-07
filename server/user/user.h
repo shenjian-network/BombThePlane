@@ -37,7 +37,6 @@ public:
     static void SetSockNonBlock(int sock);
     static int InitSocket();
     static int MyRecvC(const int& sock,const int& required_size,char* buffer);
-    static const int my_port;
     static const char* my_ip;
 private: 
     static void Die(const char*msg);
@@ -62,8 +61,10 @@ public:
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND FOR GAME~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     void set_is_playing(bool isp);
     void set_no_field(int nf);
+    void set_score(int sc);
     bool get_is_playing();
-    int get_no_field();    
+    int get_no_field();   
+    int get_score();
 private: 
     static const int error_max_number=3;
     char name[33];      //用户名
@@ -71,7 +72,8 @@ private:
     int sock_fd;        //用于连接的socket标识符,范围0-1023可直接映射
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND FOR GAME~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     bool is_playing;     //0表示不在游戏中，1表示正在游戏
-    int no_field;       //对手socket
+    int no_field;       //对手id
+    int score;
 };
 /*管理在线传输文件结构*/
 struct FileNode{
@@ -120,7 +122,19 @@ private:
     void ClientFileOnlineNotify(const int& client,PacketHead& p,const char* b);
     void ClientFileOnlineData(const int& client,const PacketHead& p,const char* b);
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
+    ServerToClientBase* CreateRetInGame(User& player_one,User& player_two,bool is_in_game=true);
+    ServerToClientBase* CreateRetPre(bool is_pre);
+    void ClientBuildBase(const int& client,const PacketHead& p,const char* b);
+    void ClientBuildAcceptAndCancel(const int& client,const PacketHead& p,const char* b,bool is_acc);
+    //prepare
+    void ClientPrepareStage(const int& client,const PacketHead& p,const char* b);
+    //predict
+    void ClientPredict(const int& client,const PacketHead& p,const char* b);
+    //playing
+    void ClientToRival(const int& client,const PacketHead& p,const char* b);
+    void ClientHit(const int& client,const PacketHead& p,const char* b);
+    //Game over
+    void ClientGameOver(const int& client,const PacketHead& p,const char* b);
     //数据成员
     vector<User> my_clients;
     LinkUnit* my_links;
