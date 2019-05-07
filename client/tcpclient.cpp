@@ -2216,9 +2216,27 @@ void TcpClient::gameStart()
 //TODO
 void TcpClient::askForPointState()
 {
-    //点击棋盘上的一个按钮，发送请求包，然后转为后手
+    //GUI部分，点击棋盘上的一个按钮，获取位置loc_small
+    unsigned short loc_small;
+    unsigned short loc_big = 0;
 
-    //首先获取棋盘的坐标cord
+    //发送请求包，然后转为后手
+    PacketHead sendPacketHead;
+
+    sendPacketHead.set_packet_type(PacketHead::kExtendPredict);
+    sendPacketHead.set_function_type(PacketHead::kExtendPredictGuess);
+    sendPacketHead.set_length(4);
+
+    ExtendPacketPlaying sendExtendPacketPlaying(sendPacketHead,
+        loc_small, loc_big);
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketReady.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
+    
+    //首先获取并保存棋盘的坐标cord
 
     defensive();
 }
@@ -2228,9 +2246,21 @@ void TcpClient::replyPointState()
 {
     //GUI部分，myBoard显示对方猜的位置和结果
 
-    //回复棋盘坐标和相应的状态，然后转为先手
+    unsigned short PointState;
+    //回复棋盘坐标和相应的状态PointState，然后转为先手
+    PacketHead sendPacketHead;
 
+    sendPacketHead.set_packet_type(PacketHead::kExtendPredict);
+    sendPacketHead.set_function_type(PointState);
+    sendPacketHead.set_length(0);
 
+    ExtendPacketPlaying sendExtendPacketPlaying(sendPacketHead);
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketReady.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
 
     offensive();
 }
@@ -2248,9 +2278,24 @@ void TcpClient::recvReplyPointState(const unsigned short res)
 void TcpClient::assertPlanePos()
 {
     //GUI部分，获取飞机的位置
+    unsigned short loc_small;
+    unsigned short loc_big;
 
     //发送断言包
+    PacketHead sendPacketHead;
 
+    sendPacketHead.set_packet_type(PacketHead::kExtendPredict);
+    sendPacketHead.set_function_type(PacketHead::kExtendPredictJudge);
+    sendPacketHead.set_length(4);
+
+    ExtendPacketPlaying sendExtendPacketPlaying(sendPacketHead,
+        loc_small, loc_big);
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketReady.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
 
 
     defensive();
@@ -2259,10 +2304,24 @@ void TcpClient::assertPlanePos()
 //TODO
 void TcpClient::replyAssertPlanePos()
 {
-    //GUI部分，显示对方的断言位置
+    //GUI部分，显示对方的断言位置和结果
+
+    unsigned short assertRes;
 
     //判断是否猜中并发送回复断言包
+    PacketHead sendPacketHead;
 
+    sendPacketHead.set_packet_type(PacketHead::kExtendPredict);
+    sendPacketHead.set_function_type(assertRes);
+    sendPacketHead.set_length(0);
+
+    ExtendPacketPlaying sendExtendPacketPlaying(sendPacketHead);
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketReady.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
 
 
     offensive();
