@@ -1171,7 +1171,7 @@ void UserManager::ClientFileOnlineData(const int& client,const PacketHead& p,con
     return;
 }
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void UserManager::ClientBuildBase(const int& client,const PacketHead& p,const char* b,bool type)
+void UserManager::ClientBuildBase(const int& client,const PacketHead& p,const char* b,int type)
 {
     ExtendPacketBuildAndDestroy *c_pack;
     c_pack = new ExtendPacketBuildAndDestroy();
@@ -1179,10 +1179,12 @@ void UserManager::ClientBuildBase(const int& client,const PacketHead& p,const ch
     vector<User>::iterator uit;
     uit=find(my_clients.begin(),my_clients.end(),c_pack->get_receive_name());
     uit->SendMessage((ServerToClientBase*)c_pack);
-    if(type)
+    if(type==1)
         xl.appendlog_game("A reject B",c_pack->get_send_name(),c_pack->get_receive_name(), "","",0);
-    else
+    else if(type==0)
         xl.appendlog_game("A invite B",c_pack->get_send_name(),c_pack->get_receive_name(), "","",0);
+    else
+        xl.appendlog_game("A cancels game",c_pack->get_send_name(),c_pack->get_receive_name(), "","",0);
     delete c_pack;
     return;   
 }
@@ -1513,7 +1515,7 @@ void UserManager::ProvideService()
                             {
                             case PacketHead::kExtendBuildAndDestroyInvite:
                             {
-                                ClientBuildBase(i,rec_head,buffer,false);
+                                ClientBuildBase(i,rec_head,buffer,0);
                                 break;
                             }
                             case PacketHead::kExtendBuildAndDestroyAccept:
@@ -1523,12 +1525,17 @@ void UserManager::ProvideService()
                             }
                             case PacketHead::kExtendBuildAndDestroyReject:
                             {
-                                ClientBuildBase(i,rec_head,buffer,true);
+                                ClientBuildBase(i,rec_head,buffer,1);
                                 break;
                             }
                             case PacketHead::kExtendBuildAndDestroyCancel:
                             {
                                 ClientBuildAcceptAndCancel(i,rec_head,buffer,false);
+                                break;
+                            }
+                            case PacketHead::kExtendBuildAndDestroyNotStart:
+                            {
+                                ClientBuildBase(i,rec_head,buffer,2);
                                 break;
                             }
                             default: 

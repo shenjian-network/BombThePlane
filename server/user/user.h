@@ -124,7 +124,7 @@ private:
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~EXTEND~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ServerToClientBase* CreateRetInGame(User& player_one,User& player_two,bool is_in_game=true);
     ServerToClientBase* CreateRetPre(bool is_pre);
-    void ClientBuildBase(const int& client,const PacketHead& p,const char* b,bool type);
+    void ClientBuildBase(const int& client,const PacketHead& p,const char* b,int type);
     void ClientBuildAcceptAndCancel(const int& client,const PacketHead& p,const char* b,bool is_acc);
     //prepare
     void ClientPrepareStage(const int& client,const PacketHead& p,const char* b);
