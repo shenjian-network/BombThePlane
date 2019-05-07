@@ -24,25 +24,34 @@ void ExtendPacketBase::set_string(const PacketHead& ph,const char* s)
 }
 /* ExtendPacketStatus */
 ExtendPacketStatus::ExtendPacketStatus():ExtendPacketBase(){}
-ExtendPacketStatus::ExtendPacketStatus(const PacketHead& ph,const char*uname):ExtendPacketBase(ph)
+ExtendPacketStatus::ExtendPacketStatus(const PacketHead& ph,const char*uname1,const char* uname2):ExtendPacketBase(ph)
 {
-    strcpy(user_name,uname);
-    user_name[32]=0;
+    strcpy(player_one_name,uname1);
+    strcpy(player_two_name,uname2);
+    player_one_name[32]=0;
+    player_two_name[32]=0;
 }
 void ExtendPacketStatus::get_string(char* s)
 {
     ExtendPacketBase::get_string(s);
-    memcpy(s+8,user_name,32);
+    memcpy(s+8,player_one_name,32);
+    memcpy(s+40,player_two_name,32);
 }
-char* ExtendPacketStatus::get_user_name()
+char* ExtendPacketStatus::get_player_one_name()
 {
-    return user_name;
+    return player_one_name;
+}
+char* ExtendPacketStatus::get_player_two_name()
+{
+    return player_two_name;
 }
 void ExtendPacketStatus::set_string(const PacketHead& ph,const char* s)
 {
     ExtendPacketBase::set_string(ph,s);
-    strcpy(user_name,s);
-    user_name[32]=0;
+    memcpy(player_one_name,s,32);
+    memcpy(player_two_name,s+32,32);
+    player_one_name[32]=0;
+    player_two_name[32]=0;
 }  
 /* ExtendPacketBuildAndDestroy */
 ExtendPacketBuildAndDestroy::ExtendPacketBuildAndDestroy():ExtendPacketBase(){}
@@ -104,3 +113,42 @@ void ExtendPacketPlaying::set_string(const PacketHead& ph,const char* s)
     loc_small=ntohs((*((unsigned short*)s))); 
     loc_big=ntohs((*((unsigned short*)(s+2)))); 
 }  
+
+/* ExtendPacketPrepare */
+ExtendPacketReady::ExtendPacketReady():ExtendPacketBase(){}
+ExtendPacketReady::ExtendPacketReady(const PacketHead& ph,const unsigned short* locs,const unsigned short* locb):ExtendPacketBase(ph)
+{
+    for(int i=0;i<loc_num;i++) 
+    {
+        loc_small[i]=locs[i];
+        loc_big[i]=locb[i];
+    }
+}
+void ExtendPacketReady::get_string(char* s)
+{
+    ExtendPacketBase::get_string(s);
+    for(int i=0;i<loc_num;i++) {
+        unsigned short tmp=htons(loc_small[i]);
+        memcpy(s+8+i*2, (char*)(&tmp) ,2);
+    }
+    for(int i=0;i<loc_num;i++) {
+        unsigned short tmp=htons(loc_big[i]);
+        memcpy(s+8+loc_num*2+i*2, (char*)(&tmp) ,2);
+    }
+}
+unsigned short* ExtendPacketReady::get_loc_small()
+{
+    return loc_small;
+}
+unsigned short* ExtendPacketReady::get_loc_big()
+{
+    return loc_big;
+}
+void ExtendPacketReady::set_string(const PacketHead& ph,const char* s)
+{
+    ExtendPacketBase::set_string(ph,s);
+    for(int i=0;i<loc_num;i++) {
+        loc_small[i]=ntohs((*((unsigned short*)s)+i)); 
+        loc_big[i]=ntohs((*((unsigned short*)(s))+i+loc_num)); 
+    }
+} 

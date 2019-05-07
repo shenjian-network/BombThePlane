@@ -60,7 +60,7 @@ int ServerToDatabase::GetUserInfo()
     //printf("get user info\n");
     ret=mydb.MySelect(10000,1,"select `uname` from `user_info`",my_result,my_lengths);
     mydb.close_conn();
-    xl.appendlog_sql_select("user_info", "select all user name", ret);
+    //xl.appendlog_sql_select("user_info", "select all user name", ret);
 
     return ret;
 }
@@ -78,7 +78,7 @@ bool ServerToDatabase::CheckUserLogin(const char* name,const char* passwd)
     mydb.close_conn();
 	char logd[100];
     sprintf(logd, "check login user: %s", name);
-    xl.appendlog_sql_select("user_info", logd , ret);
+    //xl.appendlog_sql_select("user_info", logd , ret);
     return ret;
 }
 void ServerToDatabase::UpdateLastLoginTime(const char* name,const char* now_time)
@@ -91,7 +91,7 @@ void ServerToDatabase::UpdateLastLoginTime(const char* name,const char* now_time
     char my_q[255];
     snprintf(my_q,255,format_q,now_time,name);
     ret=mydb.MyNoSelect(my_q);
-    xl.appendlog_sql_update("user_info", "last_login_time", name);
+    //xl.appendlog_sql_update("user_info", "last_login_time", name);
 
     mydb.close_conn();
     return;
@@ -113,7 +113,7 @@ void ServerToDatabase::AddUser(const char* name,const char* passwd,const char* l
     query_len=snprintf(my_q,3*1024*1024,format_q,name,md5(passwd).c_str(),last_login_time);
     ret=mydb.MyNoSelect(query_len,my_q);
 
-    xl.appendlog_sql_insert("user_info", ret);
+    //xl.appendlog_sql_insert("user_info", ret);
 
     strcpy(format_q,"create table %s_msgtable("\
                 "um_id int unsigned primary key auto_increment,"\
@@ -129,7 +129,7 @@ void ServerToDatabase::AddUser(const char* name,const char* passwd,const char* l
 
     char logdata[100];
     sprintf(logdata, "%s_msgtable", name);
-    xl.appendlog_sql_create(logdata);
+    //xl.appendlog_sql_create(logdata);
 
     mydb.close_conn();
     //printf("add userok \n");
@@ -150,7 +150,7 @@ bool ServerToDatabase::UpdateUserPwd(const char* name,const char* last_pwd,const
     snprintf(my_q,255,format_q,md5(now_pwd).c_str(),name);
     ret=mydb.MyNoSelect(my_q);
     mydb.close_conn();
-    xl.appendlog_sql_update("user_info", "passwd", name);
+    //xl.appendlog_sql_update("user_info", "passwd", name);
     return true;  
 }
 void ServerToDatabase::UpdateUserSet(const char* name,const char* u_set,const int text_length)
@@ -166,7 +166,7 @@ void ServerToDatabase::UpdateUserSet(const char* name,const char* u_set,const in
     query_len=snprintf(my_q,3*1024*1024,format_q,chunk_set,name);
     ret=mydb.MyNoSelect(query_len,my_q);
     mydb.close_conn();
-    xl.appendlog_sql_update("user_info", "user_set", name);
+    //xl.appendlog_sql_update("user_info", "user_set", name);
     delete[] chunk_set;
     delete[] my_q;
 }
@@ -184,7 +184,7 @@ unsigned int ServerToDatabase::PushBackTextContain(const char* tcontain)
     ret = mydb.MyNoSelect(query_len,my_q);
     mydb.close_conn();
 
-    xl.appendlog_sql_insert("text_contain",ret);
+    //xl.appendlog_sql_insert("text_contain",ret);
     delete[] chunk_set;
     delete[] my_q;
     return mydb.get_last_insert_id();   
@@ -207,7 +207,7 @@ unsigned int ServerToDatabase::PushBackFileContain(const int& fsize,const char* 
     ret=mydb.MyNoSelect(query_len,my_q);
     mydb.close_conn();
 
-    xl.appendlog_sql_insert("file_contain", ret);
+    //xl.appendlog_sql_insert("file_contain", ret);
 
     delete[] chunk_fcontain;
     delete[] my_q;
@@ -227,7 +227,7 @@ unsigned int ServerToDatabase::PushBackUserReceive(const char* uname,const char*
 
     char logdata[100];
     sprintf(logdata, "%s_msgtable",uname);
-    xl.appendlog_sql_insert(logdata,ret);
+    //xl.appendlog_sql_insert(logdata,ret);
     delete[] my_q;
     return mydb.get_last_insert_id();  
 }
@@ -254,7 +254,7 @@ int ServerToDatabase::GetLastTexts(const int& row_num,const char* name,const cha
     mydb.close_conn();
     char logdata[100];
     sprintf(logdata, "%s_msgtable", name);
-    xl.appendlog_sql_select(logdata, "select records", ret);
+    //xl.appendlog_sql_select(logdata, "select records", ret);
     return ret;  
 }
 void ServerToDatabase::GetFile(const unsigned int& file_key,const char* name)
@@ -267,7 +267,7 @@ void ServerToDatabase::GetFile(const unsigned int& file_key,const char* name)
     snprintf(my_q,512,format_q,name,file_key);
     ret=mydb.MySelect(1,6,my_q,my_result,my_lengths);
     mydb.close_conn();
-    xl.appendlog_sql_select("file_contain", "select file form chat record", ret);
+    //xl.appendlog_sql_select("file_contain", "select file form chat record", ret);
     return;     
 }
 //TODO
