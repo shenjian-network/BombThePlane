@@ -346,12 +346,12 @@ private:
     bool isGaming;
     bool isInviting;
 
-    QQueue<QString> invitingName;
+    QSet<QString> invitingName;
 
 
     // BOX
     QMessageBox * inviteSrcBox;  // 发出的邀请，一次只能一个
-    QVector<QMessageBox*> inviteDstBoxList;   // 邀请列表，能够接收到多个
+    QSet<QMessageBox*> inviteDstBoxList;   // 邀请列表，能够接收到多个
     QMap <QAbstractButton*, QString> box2opponame; // 邀请人的名字
 };
 

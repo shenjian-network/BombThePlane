@@ -282,7 +282,7 @@ void TcpClient::inviteDstGUI(const QString& name){
     inviteDstBox->setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     connect(inviteDstBox->button(QMessageBox::Ok), SIGNAL(clicked()), this, SLOT(acceptInvitation()), Qt::QueuedConnection);
     connect(inviteDstBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(declineInvitation()), Qt::QueuedConnection);
-    inviteDstBoxList.push_back(inviteDstBox);
+    inviteDstBoxList.insert(inviteDstBox);
     box2opponame[inviteDstBox->button(QMessageBox::Ok)] = name;
     inviteDstBox->exec();
 }
@@ -1989,7 +1989,7 @@ void TcpClient::showInvitation()
         return;
     }
 
-    invitingName.push_back(inviteName);
+    invitingName.insert(inviteName);
     //TODO
     //GUI部分，显示弹窗，同意或拒绝
     inviteDstGUI(inviteName);
