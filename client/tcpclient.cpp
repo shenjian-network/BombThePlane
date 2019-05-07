@@ -2155,10 +2155,45 @@ void TcpClient::cancelGamePassive()
     isGaming = false;
     /*
     被动取消游戏
-    显示“对方退出了游戏”
+    GUI部分，显示“对方退出了游戏”
     然后回到主界面，恢复opponame的按钮
     */
-    
+}
+
+//槽函数，主动取消邀请包
+//TODO
+void TcpClient::cancelInvitationActive()
+{
+    //取消的对象是oppoName
+    //发送cancelInvitation包
+    PacketHead sendPacketHead;
+
+    sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
+    sendPacketHead.set_function_type(PacketHead::kExtendBuildAndDestroyNotStart);
+    sendPacketHead.set_length(64);
+
+    //首先取出文本信息以便计算包长度
+    std::string usernameString = QStringToString(username);
+    std::string opponameString = QStringToString(opponame);
+
+    ExtendPacketBuildAndDestroy sendExtendPacketBuildAndDestroy(sendPacketHead,
+        stringPadding(usernameString, 32).c_str(), stringPadding(opponameString, 32).c_str());
+
+    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+    sendExtendPacketBuildAndDestroy.get_string(tmpStr);
+    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+    delete[] tmpStr;
+
+    //GUI部分，关闭“正在邀请opponame”弹窗，回到主界面
+}
+
+//TODO
+void TcpClient::cancelInvitationPassive()
+{
+    QString cancelInviteName = my_extend_packet_build_and_destroy.get_send_name();
+    invitingName.erase(cancelInviteName);
+    /*GUI部分，被动取消邀请，需要关闭相应的弹窗并给出提示*/
 }
 
 /*---------------------------------------------------------------------------------
@@ -2532,6 +2567,10 @@ void TcpClient::readyRead(){
                                 current_read_state = READ_EXTEND_BUILD_AND_DESTROY_CANCEL;
                                 current_byte_num_to_read = my_packet_head.get_length();
                                 break;
+                            case PacketHead::kExtendBuildAndDestroyNotStart://主动取消邀请包
+                                current_read_state = READ_EXTEND_BUILD_AND_DESTROY_NOT_START;
+                                current_byte_num_to_read = my_packet_head.get_length();
+                                break;
                             default:
                                 qDebug() << "switch kExtendBuildAndDestroy my_packet_head.get_function_type() case lost";
                         }
@@ -2719,7 +2758,14 @@ void TcpClient::readyRead(){
                 current_read_state = READ_PACKET_HEAD;
                 current_byte_num_to_read = kPacketHeadLen;
                 break;
-                
+            
+            case READ_EXTEND_BUILD_AND_DESTROY_NOT_START:
+                my_extend_packet_build_and_destroy.set_string(my_packet_head, set_byte_array.constData());
+                cancelInvitationPassive();//对方主动取消了邀请
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+
             default:
                 qDebug() << "switch current_read_state case lost";
         }

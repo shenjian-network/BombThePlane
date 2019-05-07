@@ -52,7 +52,8 @@ enum ReadState
     READ_EXTEND_BUILD_AND_DESTROY_INVITE,
     READ_EXTEND_BUILD_AND_DESTROY_ACCEPT,
     READ_EXTEND_BUILD_AND_DESTROY_REJECT,
-    READ_EXTEND_BUILD_AND_DESTROY_CANCEL
+    READ_EXTEND_BUILD_AND_DESTROY_CANCEL,
+    READ_EXTEND_BUILD_AND_DESTROY_NOT_START
 };
 
 
@@ -188,9 +189,10 @@ public:
 
     void recvDeclineInvitation();
 
-
+    void cancelInvitationPassive();
 
     void cancelGamePassive();
+
 
     void offensive();
 
@@ -271,9 +273,6 @@ private slots:
     void cancelSendFileDataActive();//send主动取消发送（GUI触发）
 
 
-
-
-
     void inviteGame();
 
     void cancelGameActive();
@@ -281,6 +280,8 @@ private slots:
     void acceptInvitation();
 
     void declineInvitation();
+
+    void cancelInvitationActive();
 private:
     PacketHead my_packet_head;
     ServerToClientReportSuccess my_server_to_client_report_success;
