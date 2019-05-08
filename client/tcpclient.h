@@ -214,7 +214,7 @@ public:
 
     void recvReplyAssertPlanePos(const unsigned short res);
 
-    void gameOver();
+    void gameOver(bool isWinner);
 
 private slots:
     // Signal func to handle read event
