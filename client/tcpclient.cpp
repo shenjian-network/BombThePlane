@@ -2375,6 +2375,23 @@ void TcpClient::replyAssertPlanePos()
 
     delete[] tmpStr;
 
+    bool isWinner = false;
+    //TODO,判断对方是否猜中了三次
+
+    
+    if(isWinner)//对方胜利了，发送胜利包
+    {
+        sendPacketHead.set_packet_type(PacketHead::kExtendGameOver);
+        sendPacketHead.set_function_type(PacketHead::kExtendGameOverReply);
+        sendPacketHead.set_length(0);
+
+
+        char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
+        sendPacketHead.get_string(tmpStr);
+        socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
+
+        delete[] tmpStr;
+    }
 
     offensive();
 }
@@ -2387,11 +2404,20 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
 }
 
 //TODO
-void TcpClient::gameOver()
+void TcpClient::gameOver(bool isWinner)
 {
+    isGaming = false;
     /*
-    游戏结束状态
+    GUI部分，游戏结束状态
     */
+    if(isWinner)
+    {
+
+    }
+    else
+    {
+
+    }
 }
 
 
@@ -2634,6 +2660,12 @@ void TcpClient::readyRead(){
                                  qDebug() << "switch kExtendReplyPre my_packet_head.get_function_type() case lost";
                         }
                     break;
+
+                    case PacketHead::kExtendGameOver://游戏结束（胜利）包
+                        gameOver(true);
+                        //之后继续进入read packet head状态
+                    break;
+
                     default:
                         qDebug() << "switch my_packet_head.get_packet_type() case lost";
 
