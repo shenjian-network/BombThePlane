@@ -2084,7 +2084,8 @@ void TcpClient::declineInvitation()
     QObject * object = QObject::sender();
     QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
     rejectName = rejectbutton2opponame[button];
-
+    
+    invitingName.erase(rejectName);
     sendDeclineInvitationPacket();
 }
 
