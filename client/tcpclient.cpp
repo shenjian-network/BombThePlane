@@ -273,8 +273,8 @@ void TcpClient::successGUI(const QString& err){
 void TcpClient::inviteSrcGUI(const QString& name) {
     inviteSrcBox = new QMessageBox(QMessageBox::Information, "Waiting...", "正在邀请" + name);
     inviteSrcBox->setStandardButtons(QMessageBox::Cancel);
-    connect(inviteSrcBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(cancelGameActive()), Qt::QueuedConnection);
-    inviteSrcBox->exec();
+    connect(inviteSrcBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(cancelInvitationActive()), Qt::QueuedConnection);
+    inviteSrcBox->show();
 }
 
 void TcpClient::inviteDstGUI(const QString& name){
@@ -282,10 +282,10 @@ void TcpClient::inviteDstGUI(const QString& name){
     inviteDstBox->setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     connect(inviteDstBox->button(QMessageBox::Ok), SIGNAL(clicked()), this, SLOT(acceptInvitation()), Qt::QueuedConnection);
     connect(inviteDstBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(declineInvitation()), Qt::QueuedConnection);
-    inviteDstBoxList.insert(inviteDstBox);
+    inviteDstBoxList[name] = inviteDstBox;
     acceptbutton2opponame[inviteDstBox->button(QMessageBox::Ok)] = name;
     rejectbutton2opponame[inviteDstBox->button(QMessageBox::Cancel)] = name;
-    inviteDstBox->exec();
+    inviteDstBox->show();
 }
 
 // 显示聊天室的新窗口，用于聊天(FINISHED)
@@ -1930,9 +1930,9 @@ void TcpClient::inviteGame()
     invitingName.clear();
     //TODO
     //GUI部分，关闭所有邀请的弹窗
-    for(auto box: inviteDstBoxList) {
-        box->close();
-        delete box;
+    for(auto it = inviteDstBoxList.begin(); it != inviteDstBoxList.end(); ++it){
+        it.value()->close();
+        delete it.value();
     }
     inviteDstBoxList.clear();
 
@@ -2037,11 +2037,12 @@ void TcpClient::acceptInvitation()
     QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
 
     opponame = acceptbutton2opponame[button];
-    for(auto box: inviteDstBoxList) {
-        box->close();
-        delete box;
+    for(auto it = inviteDstBoxList.begin(); it != inviteDstBoxList.end(); ++it){
+        it.value()->close();
+        delete it.value();
     }
     inviteDstBoxList.clear();
+
 
     sendAcceptInvitationPacket();
 }
@@ -2085,7 +2086,7 @@ void TcpClient::declineInvitation()
     QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
     rejectName = rejectbutton2opponame[button];
     
-    invitingName.erase(rejectName);
+    invitingName.erase(invitingName.find(rejectName));
     sendDeclineInvitationPacket();
 }
 
@@ -2114,6 +2115,7 @@ void TcpClient::recvDeclineInvitation()
     //GUI部分，关闭“正在邀请opponame”的弹窗，然后回到主界面
     inviteSrcBox->close();
     delete inviteSrcBox;
+    errorGUI(opponame + "拒绝了您的邀请");
 }
 
 
@@ -2188,14 +2190,21 @@ void TcpClient::cancelInvitationActive()
     delete[] tmpStr;
 
     //GUI部分，关闭“正在邀请opponame”弹窗，回到主界面
+    inviteSrcBox->close();
+    delete inviteSrcBox;
 }
 
 //TODO
 void TcpClient::cancelInvitationPassive()
 {
     QString cancelInviteName = my_extend_packet_build_and_destroy.get_send_name();
-    invitingName.erase(cancelInviteName);
+    invitingName.erase(invitingName.find(cancelInviteName));
     /*GUI部分，被动取消邀请，需要关闭相应的弹窗并给出提示*/
+
+    inviteDstBoxList[cancelInviteName]->close();
+    delete inviteDstBoxList[cancelInviteName];
+    inviteDstBoxList.erase(inviteDstBoxList.find(cancelInviteName));
+    errorGUI(cancelInviteName + "取消了对您的邀请");
 }
 
 /*---------------------------------------------------------------------------------
@@ -2276,7 +2285,7 @@ void TcpClient::askForPointState()
         loc_small, loc_big);
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendExtendPacketReady.get_string(tmpStr);
+    sendExtendPacketPlaying.get_string(tmpStr);
     socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
@@ -2299,10 +2308,8 @@ void TcpClient::replyPointState()
     sendPacketHead.set_function_type(PointState);
     sendPacketHead.set_length(0);
 
-    ExtendPacketPlaying sendExtendPacketPlaying(sendPacketHead);
-
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendExtendPacketReady.get_string(tmpStr);
+    sendPacketHead.get_string(tmpStr);
     socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
@@ -2337,7 +2344,7 @@ void TcpClient::assertPlanePos()
         loc_small, loc_big);
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendExtendPacketReady.get_string(tmpStr);
+    sendExtendPacketPlaying.get_string(tmpStr);
     socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
@@ -2360,10 +2367,9 @@ void TcpClient::replyAssertPlanePos()
     sendPacketHead.set_function_type(assertRes);
     sendPacketHead.set_length(0);
 
-    ExtendPacketPlaying sendExtendPacketPlaying(sendPacketHead);
 
     char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendExtendPacketReady.get_string(tmpStr);
+    sendPacketHead.get_string(tmpStr);
     socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
