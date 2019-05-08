@@ -2121,7 +2121,6 @@ void TcpClient::recvDeclineInvitation()
 // 槽函数
 void TcpClient::cancelGameActive()
 {
-    isInviting = false;
     isGaming = false;
 
     /*
@@ -2166,6 +2165,7 @@ void TcpClient::cancelGamePassive()
 //TODO
 void TcpClient::cancelInvitationActive()
 {
+    isInviting = false;
     //取消的对象是oppoName
     //发送cancelInvitation包
     PacketHead sendPacketHead;
