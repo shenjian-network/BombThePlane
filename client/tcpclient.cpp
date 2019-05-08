@@ -2121,6 +2121,7 @@ void TcpClient::recvDeclineInvitation()
 // 槽函数
 void TcpClient::cancelGameActive()
 {
+    isInviting = true;
     isGaming = false;
 
     /*
