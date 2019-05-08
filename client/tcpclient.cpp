@@ -1211,11 +1211,12 @@ void TcpClient::insertListWidget(QString name, bool isOnline, bool isInGame){
     button2name[button] = name;
     user->setLayout(layout);
     InitRightLayout();
-
+qDebug() << "I am here 3\n";
     user2Index.insert(name, ++index);
-
+qDebug() << "I am here 4\n";
     userList->addItem(item);
     userList->setItemWidget(item, user);
+    qDebug() << "I am here 5\n";
 }
 
 
@@ -1426,8 +1427,6 @@ void TcpClient::InitRightLayout(){
 
     rightLayout->addWidget(label);
 
-    my_board = new Board();
-    rightLayout->addWidget(my_board);
 
     rightLayout->setMargin(0);
     rightLayout->setSpacing(0);
@@ -1437,18 +1436,18 @@ void TcpClient::InitRightLayout(){
     rightStackLayout->addWidget(right);
 }
 
-
+// TODO 实现配置
 void TcpClient::setConfigImpl(int fontsize, int color){
-    int num = rightStackLayout->count();
-    QWidget* cur;
-    QTextBrowser* curTextBrowser;
-    for(int i = 1;i < num; ++i){
-        cur = rightStackLayout->itemAt(i)->widget();
-        qDebug() << cur->layout()->count();
-        curTextBrowser = static_cast<QTextBrowser*>(cur->layout()->itemAt(1)->widget());
-        curTextBrowser->setStyleSheet("font-size: " + QString::number(fontsize)
-                                      + "px;" + "color: " + COLOR[color] + ";");
-    }
+//    int num = rightStackLayout->count();
+//    QWidget* cur;
+//    QTextBrowser* curTextBrowser;
+//    for(int i = 1;i < num; ++i){
+//        cur = rightStackLayout->itemAt(i)->widget();
+//        qDebug() << cur->layout()->count();
+//        curTextBrowser = static_cast<QTextBrowser*>(cur->layout()->itemAt(1)->widget());
+//        curTextBrowser->setStyleSheet("font-size: " + QString::number(fontsize)
+//                                      + "px;" + "color: " + COLOR[color] + ";");
+//    }
 }
 
 

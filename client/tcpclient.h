@@ -17,7 +17,6 @@
 #include "../common/extend_packet.h"
 #include "../common/server_to_client.h"
 #include "clickablelabel.h"
-#include "board.h"
 
 
 namespace Ui {
@@ -342,8 +341,6 @@ private:
 
     bool isOnline;
 
-    Board * my_board;
-    Board * oppo_board;
     bool isGaming;
     bool isInviting;
 
@@ -355,6 +352,9 @@ private:
     QMap<QString, QMessageBox*> inviteDstBoxList;   // 邀请列表，能够接收到多个
     QMap <QAbstractButton*, QString> acceptbutton2opponame; // 邀请人的名字
     QMap <QAbstractButton*, QString> rejectbutton2opponame; // 邀请人的名字
+
+    // board
+
 };
 
 #endif // TCPCLIENT_H

@@ -30,7 +30,6 @@ SOURCES += \
     ../common/extend_packet.cpp \
     ../common/packet_head.cpp \
     ../common/server_to_client.cpp \
-    board.cpp \
         main.cpp \
         tcpclient.cpp \
     clickablelabel.cpp
@@ -40,7 +39,6 @@ HEADERS += \
     ../common/extend_packet.h \
     ../common/packet_head.h \
     ../common/server_to_client.h \
-    board.h \
         tcpclient.h \
     clickablelabel.h
 
