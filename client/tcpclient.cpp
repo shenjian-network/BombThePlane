@@ -274,6 +274,7 @@ void TcpClient::inviteSrcGUI(const QString& name) {
     inviteSrcBox = new QMessageBox(QMessageBox::Information, "Waiting...", "正在邀请" + name);
     inviteSrcBox->setStandardButtons(QMessageBox::Cancel);
     connect(inviteSrcBox->button(QMessageBox::Cancel), SIGNAL(clicked()), this, SLOT(cancelInvitationActive()), Qt::QueuedConnection);
+    inviteSrcBox->setWindowModality(Qt::NonModal);
     inviteSrcBox->show();
 }
 
@@ -285,6 +286,7 @@ void TcpClient::inviteDstGUI(const QString& name){
     inviteDstBoxList[name] = inviteDstBox;
     acceptbutton2opponame[inviteDstBox->button(QMessageBox::Ok)] = name;
     rejectbutton2opponame[inviteDstBox->button(QMessageBox::Cancel)] = name;
+    inviteDstBox->setWindowModality(Qt::NonModal);
     inviteDstBox->show();
 }
 
