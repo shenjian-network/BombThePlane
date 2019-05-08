@@ -23,6 +23,7 @@
 #include <QPlainTextEdit>
 #include <QFileDialog>
 #include <QHostInfo>
+#include <QComboBox>
 
 TcpClient::TcpClient(QWidget *parent) :
     QMainWindow(parent),
@@ -54,8 +55,8 @@ TcpClient::TcpClient(QWidget *parent) :
     curChatter->setFont(ft);
 
     // 右栏，包括消息窗口和发送消息栏
-    rightStackLayout = new QStackedLayout;
-    rightStackLayout->setStackingMode(QStackedLayout::StackOne);
+//    rightStackLayout = new QStackedLayout;
+//    rightStackLayout->setStackingMode(QStackedLayout::StackOne);
 
     QTimer *timer=new QTimer(this);
     timer->start(1000); // 每次发射timeout信号时间间隔为1秒
@@ -81,8 +82,8 @@ TcpClient::~TcpClient()
         delete curChatter;
     }
 
-    if(rightStackLayout){
-        delete rightStackLayout;
+    if(gameWindow){
+        delete gameWindow;
     }
 
     if(loginWindow){
@@ -294,7 +295,7 @@ void TcpClient::inviteDstGUI(const QString& name){
 void TcpClient::chatRoomGUI(){
     chatRoomWindow = new QWidget;
     chatRoomWindow->setWindowTitle("ChatRoom");
-    chatRoomWindow->setFixedSize(800, 630);
+    chatRoomWindow->setFixedSize(494, 800);
 
     QPalette pal(chatRoomWindow->palette());
     pal.setColor(QPalette::Background, QColor(46, 50, 56)); //设置背景黑色
@@ -391,13 +392,13 @@ void TcpClient::chatRoomGUI(){
     leftLayout->addWidget(userList);
 
 
-    rightStackLayout->addWidget(new QWidget);
+//    rightStackLayout->addWidget(new QWidget);
 
     chatRoomMainLayout = new QHBoxLayout;
     chatRoomMainLayout->addLayout(leftLayout);
-    chatRoomMainLayout->addLayout(rightStackLayout);
+//    chatRoomMainLayout->addLayout(rightStackLayout);
     chatRoomMainLayout->setStretchFactor(leftLayout, 1);
-    chatRoomMainLayout->setStretchFactor(rightStackLayout, 2);
+//    chatRoomMainLayout->setStretchFactor(rightStackLayout, 2);
     chatRoomMainLayout->setMargin(0);
 
     chatRoomWindow->setLayout(chatRoomMainLayout);
@@ -433,43 +434,6 @@ std::string stringPadding(std::string myString, const unsigned int & len)
 }
 
 //-----------------------//
-
-//点击回看 发送回看包
-void TcpClient::askForReview(){
-    //当前框的对象，也就是要回看的人，如果所有人，则为空
-    std::string toUser;
-
-    //TODO
-    /*获得toUser*/
-    toUser = QStringToString(curChatter->text());
-    if(toUser == "群聊"){
-        toUser = "";
-    }
-
-    //发送配置文件包
-    PacketHead sendPacketHead;
-
-    sendPacketHead.set_packet_type(PacketHead::kC2SText);
-    sendPacketHead.set_function_type(PacketHead::kC2STextAskForTexts);
-
-    sendPacketHead.set_length(36);
-
-    //没有reviewLineCnt这一项
-    if(configMap.find("reviewLineCnt") == configMap.end())
-    {
-        qDebug() << "reviewLineCnt Not Exists" << endl;
-        return;
-    }
-
-    ClientToServerTextAskForTexts sendClientToServerTextAskForTexts(sendPacketHead,
-        atoi(configMap["reviewLineCnt"].c_str()), stringPadding(toUser, 32).c_str());
-
-    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendClientToServerTextAskForTexts.get_string(tmpStr);
-    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-    delete[] tmpStr;
-}
 
 // 配置界面 （FINISHED）
 //下面有个确定键，点击后，会更改GUI界面，并触发槽函数sendConfig
@@ -529,13 +493,6 @@ void TcpClient::offline(){
         errorGUI("您被T了");
         exit(1);
     } else{
-        //如果当前我在传输文件，并且下线的人正好是我传输的那个人，那么终止传输
-        if(recvFile.size()){
-            if(senderName == name){
-                cancelRecvFileDataPassive();
-            }
-        }
-
         setUserStatus(name, false, false);
     }
 }
@@ -548,52 +505,7 @@ void TcpClient::online(){
     setUserStatus(name, true, false);
 }
 
-// 清屏，清除对话框的内容 （FINISHED）
-void TcpClient::cls(){
-    QWidget* cur = rightStackLayout->currentWidget();
-    QTextBrowser* curTextBrowser = static_cast<QTextBrowser*>(cur->layout()->itemAt(1)->widget());
-    curTextBrowser->clear();
 
-    askForReview();
-}
-
-// 显示文本 （FINISHED）
-void TcpClient::showText(){
-    char* text = my_server_to_client_simple_text.get_simple_text_contain();
-    char* from = my_server_to_client_simple_text.get_user_from_name();
-    char* to = my_server_to_client_simple_text.get_user_to_name();
-    char* time = my_server_to_client_simple_text.get_now_time();
-
-    qDebug() << "text:" << text;
-    qDebug() << "from:" << from;
-    qDebug() << "time:" << time;
-
-    if(to[0] == '\0'){
-        QWidget * cur = rightStackLayout->itemAt(user2Index["群聊"])->widget();
-        QTextBrowser* curTextBrowser = static_cast<QTextBrowser*>(cur->layout()->itemAt(1)->widget());
-        curTextBrowser->append(QString(from) + " <" + QString(time) + "> ");
-        curTextBrowser->append(QString(text));
-    }else{
-        if(QString(from) == username){
-            showTextImpl(QString(to), QString(text), QString(time), true);
-        }else{
-            showTextImpl(QString(from), QString(text), QString(time));
-        }
-    }
-}
-
-
-void TcpClient::setEnableFileTransfer(bool isEnable){
-    int num = rightStackLayout->count();
-    QWidget* cur;
-    QPushButton* button;
-    for(int i = 1;i < num; ++i){
-        cur = rightStackLayout->itemAt(i)->widget();
-        qDebug() << cur->layout()->itemAt(1)->widget()->children().count();
-        button = static_cast<QPushButton*>(cur->layout()->itemAt(2)->widget()->children().at(3));
-        button->setEnabled(isEnable);
-    }
-}
 
 
 
@@ -602,467 +514,8 @@ std::string getKey(std::string senderNameString, std::string recvNameString, std
     return stringPadding(senderNameString, 32) + stringPadding(recvNameString, 32) + stringPadding(fileNameString, 64);
 }
 
-//TODO
-void TcpClient::showFileTransferring(std::string senderName, std::string recvName, std::string fileName, bool isSender)
-{
-    //获得相应的fileToShow
-    std::string fileKey = getKey(senderName, recvName, fileName);
-    fileTrans fileToShow;
-    if(isSender)
-    {
-        if(sendFile.find(fileKey) == sendFile.end())
-            return;
-        fileToShow = sendFile[fileKey];
-    }
-    else
-    {
-        if(recvFile.find(fileKey) == recvFile.end())
-            return;
-        fileToShow = recvFile[fileKey];
-    }
 
 
-    int perCent = 100 * FILEBUFFERSIZE * fileToShow.blockCnt / fileToShow.len;
-    //TODO
-    //GUI显示进度百分比perCent
-    pdlg->setValue(perCent);
-}
-
-//TODO
-void TcpClient::errorFileTransferring(std::string senderName, std::string recvName, std::string fileName)
-{
-    //显示已经有文件正在发送，不能在这时候发送
-    errorGUI("传输错误");
-    pdlg->close();
-
-}
-
-//TODO
-void TcpClient::cancelFileTransferring(std::string senderName, std::string recvName, std::string fileName, bool isSender)
-{
-    //显示文件已经被取消传输
-    errorGUI("传输取消");
-    if(pdlg){
-        qDebug() << pdlg;
-        pdlg->close();
-        delete pdlg;
-        pdlg = nullptr;
-        qDebug() << "pdlg delete successfully";
-    }
-    if(fileWindow){
-        qDebug() << fileWindow;
-        fileWindow->close();
-        delete fileWindow;
-        fileWindow = nullptr;
-        qDebug() << "fileWindow delete successfully";
-    }
-    setEnableFileTransfer(true);
-}
-
-//TODO
-void TcpClient::doneFileTransferring(std::string senderName, std::string recvName, std::string fileName, bool isSender)
-{
-    //显示文件传输完成
-    pdlg->setValue(100);
-    successGUI("传输完成");
-    setEnableFileTransfer(true);
-}
-
-
-int getFileLen(const char * fileName)
-{
-    int fileLen;
-    FILE *fp;
-    fp = fopen(fileName,"rb");
-    fseek(fp, 0, SEEK_END);
-    fileLen = ftell(fp);
-    fclose(fp);
-    return fileLen;
-}
-
-//TODO
-void TcpClient::tryToSend(QString fileName)
-{
-    /*
-    点击发送文件的按钮触发的事件,首先需要获得接收方用户名recvName, 文件名fileName
-    */
-    recvName = curChatter->text();
-    this->fileName = fileName;
-
-    qDebug() << "要发送的文件" << fileName;
-    qDebug() << "发送的用户" << recvName;
-
-    pdlg = new QProgressDialog;
-    QPushButton* cancel = new QPushButton("cancel");
-    connect(cancel, SIGNAL(clicked()), this, SLOT(cancelSendFileDataActive()));
-    pdlg->setCancelButton(cancel);
-
-    std::string senderNameString = QStringToString(username);
-    std::string recvNameString = QStringToString(recvName);
-    std::string fileNameString = QStringToString(fileName);
-    int fileLen = getFileLen(fileNameString.c_str());
-
-    qDebug() << "文件长度" << fileLen;
-
-    setEnableFileTransfer(false);
-
-    /*
-    首先在sendFile这个Map中查看是否存在，如果存在则说明正在发送，弹窗显示不能继续发送,
-    否则向对端发送一个请求发送包
-    */
-    std::string sendFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    if(sendFile.find(sendFileKey) == sendFile.end())
-    {
-        //Map中找不到，说明不是正在发送，可以发送，要显示发送的进度
-        FILE* fd = fopen(fileNameString.c_str(), "rb");
-        sendFile[sendFileKey] = fileTrans(fd, 0, fileLen);
-
-        showFileTransferring(senderNameString, recvNameString, fileNameString, true);
-        //给对端发请求发送包
-        PacketHead sendPacketHead;
-
-        sendPacketHead.set_packet_type(PacketHead::kC2CFileNotify);
-        sendPacketHead.set_function_type(PacketHead::kC2CFileNotifyRequest);
-
-        sendPacketHead.set_length(132);
-
-        SenderToReceiverFileNotify sendSenderToReceiverFileNotify(sendPacketHead,
-            stringPadding(senderNameString, 32).c_str(), stringPadding(recvNameString, 32).c_str(),
-            stringPadding(fileNameString, 64).c_str(), fileLen);
-
-        char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-        sendSenderToReceiverFileNotify.get_string(tmpStr);
-        socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-        delete[] tmpStr;
-    }
-    else
-    {
-        //显示文件正在发送，不能发送
-        errorFileTransferring(senderNameString, recvNameString, fileNameString);
-    }
-}
-
-//TODO
-void TcpClient::showTryToSend()
-{
-    //receiver收到请求发送包，要显示出相关的文件信息，并提供相关的按钮（接收/取消），如果点击接收，那么要有是否覆盖的提示
-
-    // 发送者，文件名
-    senderName = my_sender_to_receiver_file_notify.get_sender_name();
-    fileName = my_sender_to_receiver_file_notify.get_file_name();
-    fileLen = my_sender_to_receiver_file_notify.get_file_size();
-    recvName = my_sender_to_receiver_file_notify.get_receiver_name();
-
-    fileWindow = new QWidget;
-
-    QVBoxLayout* mainLayout = new QVBoxLayout;
-
-    QLabel* info = new QLabel(senderName + "将向你发送文件\"" + fileName + "\", 大小为" +  QString(fileLen)  +"字节，是否同意?");
-
-    QHBoxLayout* sublayout = new QHBoxLayout;
-    QPushButton * ack = new QPushButton("接受");
-    QPushButton * rjt = new QPushButton("拒绝");
-    sublayout->addWidget(ack);
-    sublayout->addWidget(rjt);
-
-    mainLayout->addWidget(info);
-    mainLayout->addLayout(sublayout);
-    fileWindow->setLayout(mainLayout);
-
-    connect(ack, SIGNAL(clicked()), this, SLOT(acceptRecv()), Qt::QueuedConnection);
-    connect(rjt, SIGNAL(clicked()), this, SLOT(cancelRecvFileDataActive()), Qt::QueuedConnection);
-
-    fileWindow->show();
-}
-
-//TODO
-void TcpClient::acceptRecv()
-{
-    fileWindow->close();
-    /*
-    点击文件接收按钮触发的事件,首先要获得发送方用户名senderName, 文件名称fileName,文件大小fileLen
-    */
-
-    /*
-    open本地文件，打开方式为trunc
-    然后在recvFile这个Map中增加一项，下标为发送方+接收方+文件名
-    值为fileTrans,不需要len这一项
-    */
-    std::string senderNameString = QStringToString(senderName);
-    std::string recvNameString = QStringToString(username);
-    std::string fileNameString = QStringToString(fileName);
-    FILE* fd = fopen(fileNameString.c_str(), "wb");
-
-
-    std::string recvFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    recvFile[recvFileKey] = fileTrans(fd, 0, fileLen);
-    pdlg = new QProgressDialog;
-    QPushButton* cancel = new QPushButton("cancel");
-    connect(cancel, SIGNAL(clicked()), this, SLOT(cancelRecvFileDataActive()));
-    pdlg->setCancelButton(cancel);
-
-    /*
-    向对端发送同意接收包
-    */
-    PacketHead sendPacketHead;
-
-    sendPacketHead.set_packet_type(PacketHead::kC2CFileNotify);
-    sendPacketHead.set_function_type(PacketHead::kC2CFileNotifyAccept);
-
-    sendPacketHead.set_length(132);
-
-    SenderToReceiverFileNotify recvSenderToReceiverFileNotify(sendPacketHead,
-        stringPadding(senderNameString, 32).c_str(), stringPadding(recvNameString, 32).c_str(),
-        stringPadding(fileNameString, 64).c_str(), 0);
-
-    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    recvSenderToReceiverFileNotify.get_string(tmpStr);
-    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-    delete[] tmpStr;
-
-    qDebug() << "it sends";
-}
-
-
-void TcpClient::sendFileData()
-{
-    qDebug() << "it works";
-    /*Sender收到请求发送包后，从中读取块，然后发送*/
-    /*
-    注意：由于common包没有处理尾0的情况，因此username只允许到31
-    */
-    std::string senderNameString = std::string(my_sender_to_receiver_file_notify.get_sender_name());
-    std::string recvNameString = std::string(my_sender_to_receiver_file_notify.get_receiver_name());
-    std::string fileNameString = std::string(my_sender_to_receiver_file_notify.get_file_name());
-    unsigned int blockCnt = my_sender_to_receiver_file_notify.get_block_num();
-
-
-    std::string sendFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    if(sendFile.find(sendFileKey) == sendFile.end())
-        return;
-
-    auto myFileTrans = sendFile[sendFileKey];
-
-    char* fileContain = new char [FILEBUFFERSIZE + 1];
-    unsigned int readSize = fread(fileContain, 1, FILEBUFFERSIZE, myFileTrans.fd);
-
-    PacketHead sendPacketHead;
-
-    sendPacketHead.set_packet_type(PacketHead::kC2CFileData);
-    sendPacketHead.set_length(kFileDataLen);
-
-    if(readSize < FILEBUFFERSIZE)//读到了文件结尾
-    {
-        blockCnt = 0xFFFF;
-        fclose(myFileTrans.fd);
-        sendFile.erase(sendFileKey);
-    }
-    else{
-        sendFile[sendFileKey].blockCnt = blockCnt;
-        showFileTransferring(senderNameString, recvNameString, fileNameString, true);
-    }
-    SenderToReceiverFileData senderToReceiverFileData(sendPacketHead,
-        stringPadding(senderNameString, 32).c_str(), stringPadding(recvNameString, 32).c_str(),
-        stringPadding(fileNameString, 64).c_str(), blockCnt, fileContain);
-
-    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    senderToReceiverFileData.get_string(tmpStr);
-    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-    delete[] tmpStr;
-    delete[] fileContain;
-
-    if(blockCnt == 0xFFFF){
-        doneFileTransferring(senderNameString, recvNameString, fileNameString, true);
-    }
-}
-
-void TcpClient::writeDataAndRequest()
-{
-    /*rec从包中获得数据并向send发送新的请求*/
-    std::string senderNameString = std::string(my_sender_to_receiver_file_data.get_sender_name());
-    std::string recvNameString = std::string(my_sender_to_receiver_file_data.get_receiver_name());
-    std::string fileNameString = std::string(my_sender_to_receiver_file_data.get_file_name());
-    unsigned int blockCnt = my_sender_to_receiver_file_data.get_block_num();
-
-    std::string recvFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    if(recvFile.find(recvFileKey) == recvFile.end())
-        return;
-
-
-    auto myFileTrans = recvFile[recvFileKey];
-
-    if(blockCnt != 0xFFFF)
-    {
-        fwrite(my_sender_to_receiver_file_data.get_file_contain(), 1, FILEBUFFERSIZE, myFileTrans.fd);
-        showFileTransferring(senderNameString, recvNameString, fileNameString, false);
-        /*
-        向对端发送请求接收包
-        */
-        ++blockCnt;
-        recvFile[recvFileKey].blockCnt = blockCnt;
-        PacketHead sendPacketHead;
-        sendPacketHead.set_packet_type(PacketHead::kC2CFileNotify);
-        sendPacketHead.set_function_type(PacketHead::kC2CFileNotifyAccept);
-        sendPacketHead.set_length(132);
-        SenderToReceiverFileNotify recvSenderToReceiverFileNotify(sendPacketHead,
-            stringPadding(senderNameString, 32).c_str(), stringPadding(recvNameString, 32).c_str(),
-            stringPadding(fileNameString, 64).c_str(), blockCnt);
-
-        char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-        recvSenderToReceiverFileNotify.get_string(tmpStr);
-        socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-        delete[] tmpStr;
-    }
-    else
-    {
-
-        fwrite(my_sender_to_receiver_file_data.get_file_contain(), 1,
-            myFileTrans.len - myFileTrans.blockCnt * FILEBUFFERSIZE, myFileTrans.fd);
-
-        fclose(myFileTrans.fd);
-        qDebug() << "writeDataAndRequest erase!";
-        recvFile.erase(recvFileKey);
-        doneFileTransferring(senderNameString, recvNameString, fileNameString, false);
-
-    }
-}
-
-//主动取消发送
-void TcpClient::cancelSendFileDataActive()
-{
-    //TODO
-    std::string senderNameString = QStringToString(username);
-    std::string recvNameString = QStringToString(recvName);
-    std::string fileNameString = QStringToString(fileName);
-
-    qDebug() << recvName;
-    qDebug() << fileName;
-
-    cancelFileTransferring(senderNameString, recvNameString, fileNameString, true);//GUI显示取消发送
-
-    std::string sendFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    if(sendFile.find(sendFileKey) == sendFile.end())
-        return;
-
-    /*向对面发送取消发送包*/
-
-    PacketHead sendPacketHead;
-
-    sendPacketHead.set_packet_type(PacketHead::kC2CFileNotify);
-    sendPacketHead.set_function_type(PacketHead::kC2CFileNotifyCancelSend);  //注册
-    sendPacketHead.set_length(132);
-    int fileLen = sendFile[sendFileKey].len;
-
-    SenderToReceiverFileNotify sendSenderToReceiverFileNotify(sendPacketHead,
-            stringPadding(senderNameString, 32).c_str(), stringPadding(recvNameString, 32).c_str(),
-            stringPadding(fileNameString, 64).c_str(), fileLen);
-
-    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendSenderToReceiverFileNotify.get_string(tmpStr);
-    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-    delete[] tmpStr;
-
-    /*发送完成*/
-
-    fclose(sendFile[sendFileKey].fd);
-    sendFile.erase(sendFileKey);
-}
-
-//主动取消接收
-void TcpClient::cancelRecvFileDataActive()
-{
-    //需要知道senderName和fileName
-
-
-    std::string senderNameString = QStringToString(senderName);
-    std::string recvNameString = QStringToString(username);
-    std::string fileNameString = QStringToString(fileName);
-
-    cancelFileTransferring(senderNameString, recvNameString, fileNameString, false);//GUI显示取消发送
-
-    std::string recvFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    if(recvFile.find(recvFileKey) == recvFile.end())
-        return;
-
-    //TODO
-    /*向对面发送取消接收包*/
-
-    PacketHead sendPacketHead;
-
-    sendPacketHead.set_packet_type(PacketHead::kC2CFileNotify);
-    sendPacketHead.set_function_type(PacketHead::kC2CFileNotifyCancelRecv);  //注册
-    sendPacketHead.set_length(132);
-    int fileLen = recvFile[recvFileKey].len;
-
-    SenderToReceiverFileNotify sendSenderToReceiverFileNotify(sendPacketHead,
-            stringPadding(senderNameString, 32).c_str(), stringPadding(recvNameString, 32).c_str(),
-            stringPadding(fileNameString, 64).c_str(), fileLen);
-
-    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendSenderToReceiverFileNotify.get_string(tmpStr);
-    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-    delete[] tmpStr;
-
-    /*发送完成*/
-
-    fclose(recvFile[recvFileKey].fd);
-    remove(fileNameString.c_str());
-
-    qDebug() << "cancelRecvFileDataActive erase";
-    recvFile.erase(recvFileKey);
-}
-
-//被动取消发送
-void TcpClient::cancelSendFileDataPassive()
-{
-    std::string senderNameString = std::string(my_sender_to_receiver_file_data.get_sender_name());
-    std::string recvNameString = std::string(my_sender_to_receiver_file_data.get_receiver_name());
-    std::string fileNameString = std::string(my_sender_to_receiver_file_data.get_file_name());
-
-    cancelFileTransferring(senderNameString, recvNameString, fileNameString, true);//GUI显示取消发送
-
-    std::string sendFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    if(sendFile.find(sendFileKey) == sendFile.end())
-        return;
-
-    fclose(sendFile[sendFileKey].fd);
-    sendFile.erase(sendFileKey);
-}
-
-
-//被动取消接收
-void TcpClient::cancelRecvFileDataPassive()
-{
-    std::string senderNameString = std::string(my_sender_to_receiver_file_data.get_sender_name());
-    std::string recvNameString = std::string(my_sender_to_receiver_file_data.get_receiver_name());
-    std::string fileNameString = std::string(my_sender_to_receiver_file_data.get_file_name());
-
-    cancelFileTransferring(senderNameString, recvNameString, fileNameString, false);//GUI显示取消发送
-
-    std::string recvFileKey = getKey(senderNameString, recvNameString, fileNameString);
-
-    if(recvFile.find(recvFileKey) == recvFile.end())
-        return;
-
-    fclose(recvFile[recvFileKey].fd);
-    remove(fileNameString.c_str());
-
-    qDebug() << "cancelRecvFileDataPassive erase";
-    recvFile.erase(recvFileKey);
-}
 
 
 std::string TcpClient::singleConfigString(std::string configKey)
@@ -1210,66 +663,14 @@ void TcpClient::insertListWidget(QString name, bool isOnline, bool isInGame){
     layout->setSpacing(0);
     button2name[button] = name;
     user->setLayout(layout);
-    InitRightLayout();
-qDebug() << "I am here 3\n";
+//    InitGameWindow();
     user2Index.insert(name, ++index);
-qDebug() << "I am here 4\n";
     userList->addItem(item);
     userList->setItemWidget(item, user);
-    qDebug() << "I am here 5\n";
 }
 
 
-// 选择用户列表中所有用户（已废弃)
-void TcpClient::selectAll(){
-    int count = userList->count();
-    QListWidgetItem * item;
-    QWidget * widget;
-    QCheckBox * box;
-    for(int i = 0;i < count; ++i){
-        item = userList->item(i);
-        widget = userList->itemWidget(item);
-        box = static_cast<QCheckBox*>(widget);
-        box->setChecked(true);
-    }
-}
 
-// 不选用户列表所有用户（已废弃)
-void TcpClient::selectNone(){
-    int count = userList->count();
-    QListWidgetItem * item;
-    QWidget * widget;
-    QCheckBox * box;
-    for(int i = 0;i < count; ++i){
-        item = userList->item(i);
-        widget = userList->itemWidget(item);
-        box = static_cast<QCheckBox*>(widget);
-        box->setChecked(false);
-    }
-}
-
-
-// 得到用户列表的用户选中的状态（已废弃）
-void TcpClient::getCheckState(QVector<bool>& vecIsChecked,  QVector<QString>& vecName){
-    int count = userList->count();
-    bool isChecked;
-    QListWidgetItem * item;
-    QWidget * widget;
-    QCheckBox * box;
-    QString name;
-
-    vecIsChecked.clear();
-    vecName.clear();
-    for(int i = 0;i < count; ++i){
-        item = userList->item(i);
-        widget = userList->itemWidget(item);
-        box = static_cast<QCheckBox*>(widget);
-        isChecked = box->isChecked();
-        vecIsChecked.push_back(isChecked);
-        name = box->text();
-        vecName.push_back(name);
-    }
-}
 
 // 设置用户名的状态 (FINISHED)
 void TcpClient::setUserStatus(QString name, bool isOnline, bool isInGame){
@@ -1386,55 +787,487 @@ void TcpClient::reportSuccess(){
 }
 
 
-// 显示文本内容（TODO）
-void TcpClient::showFileInfo(){
-
-}
-
-// 写入文件内容 （TODO）
-void TcpClient::writeFileContain(){
-
-}
-
-
-// 显示消息，带GUI
-void TcpClient::showTextImpl(QString name, QString msg, QString tm, bool isMyself){
-    QWidget * cur = rightStackLayout->itemAt(user2Index[name])->widget();
-    QTextBrowser* curTextBrowser = static_cast<QTextBrowser*>(cur->layout()->itemAt(1)->widget());
-    if(isMyself){
-        name = username;
-    }
-    curTextBrowser->append(name + " <" + tm + "> ");
-    curTextBrowser->append(msg);
-}
-
-
 // TODO: 游戏主界面，需要重写
-void TcpClient::InitRightLayout(){
-    QWidget * right = new QWidget;
+void TcpClient::InitGameWindow(){
+      gameWindow = new QWidget;
+      gameWindow->setFixedHeight(700);
+      gameWindow->setMinimumWidth(1100);
 
-    QVBoxLayout* rightLayout = new QVBoxLayout;
-    // 右栏，包括消息窗口和发送消息栏
+      auto layout = new QVBoxLayout;
 
-    QLabel* label = new QLabel;
-    label->setAlignment(Qt::AlignCenter);
-    label->setFixedHeight(50);
-    label->setStyleSheet("background: white; color: black;border-bottom: 1px solid rgb(230, 230, 255);");
+      // opponame
+      QLabel* label = new QLabel("自己:" + username + "\t对手:" + opponame + "\t");
+      label->setAlignment(Qt::AlignCenter);
+      label->setFixedHeight(50);
+      label->setStyleSheet("background: white; color: black;border-bottom: 1px solid rgb(230, 230, 255);");
 
-    QFont ft;
-    ft.setPointSize(15);
-    label->setFont(ft);
+      QFont ft;
+      ft.setPointSize(15);
+      label->setFont(ft);
+      layout->addWidget(label);
 
-    rightLayout->addWidget(label);
+      // board
+      auto board_layout = new QHBoxLayout;
+      my_board = new QTableWidget;
+      my_board->setRowCount(BOARD_SIZE);
+      my_board->setColumnCount(BOARD_SIZE);
+//      my_board->setFixedSize(200, 200);
+      my_board->setHorizontalHeaderLabels({"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"});
+      my_board->setVerticalHeaderLabels({"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"});
+
+      for (int i = 0;i < BOARD_SIZE; ++i) {
+        my_board->setRowHeight(i, 50);
+        my_board->setColumnWidth(i, 50);
+      }
+
+      for(int i = 0;i < BOARD_SIZE; ++i) {
+          for(int j = 0;j < BOARD_SIZE; ++j) {
+                my_board->setItem(i,j, new QTableWidgetItem);
+          }
+      }
+      my_board->setMouseTracking(true);
+      my_board->setEditTriggers(QTableWidget::NoEditTriggers);
+
+      connect(my_board, SIGNAL(cellDoubleClicked(int, int)), this, SLOT(my_board_doubleclicked(int, int)));
+      connect(my_board, SIGNAL(cellEntered(int, int)), this, SLOT(my_board_entered(int, int)));
+      board_layout->addWidget(my_board);
 
 
-    rightLayout->setMargin(0);
-    rightLayout->setSpacing(0);
+      oppo_board = new QTableWidget;
+      oppo_board->setRowCount(BOARD_SIZE);
+      oppo_board->setColumnCount(BOARD_SIZE);
+//      my_board->setFixedSize(200, 200);
+      oppo_board->setHorizontalHeaderLabels({"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"});
+      oppo_board->setVerticalHeaderLabels({"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"});
 
-    right->setLayout(rightLayout);
-    // stack
-    rightStackLayout->addWidget(right);
+      for (int i = 0;i < BOARD_SIZE; ++i) {
+          oppo_board->setRowHeight(i, 50);
+          oppo_board->setColumnWidth(i, 50);
+      }
+      for(int i = 0;i < BOARD_SIZE; ++i) {
+          for(int j = 0;j < BOARD_SIZE; ++j) {
+                my_board->setItem(i,j, new QTableWidgetItem);
+          }
+      }
+      oppo_board->setEditTriggers(QTableWidget::NoEditTriggers);
+      connect(oppo_board, SIGNAL(cellDoubleClicked(int, int)), this, SLOT(oppo_board_doubleclicked(int, int)));
+      board_layout->addWidget(oppo_board);
+
+      layout->addLayout(board_layout);
+
+      // 控制键
+      auto control_layout = new QHBoxLayout;
+
+      // 摆放完成
+      auto my_plane_done = new QPushButton("完成摆放");
+      my_plane_done->setFixedSize(100, 20);
+      my_plane_done->setEnabled(false);
+      connect(my_plane_done, SIGNAL(clicked()), this, SLOT(gameReady()), Qt::QueuedConnection);
+      control_layout->addWidget(my_plane_done);
+
+      // 上下左右
+      direction_index = 0;
+      auto direction = new QComboBox;
+
+      direction->setFixedSize(100, 20);
+      direction->addItem("上");
+      direction->addItem("下");
+      direction->addItem("左");
+      direction->addItem("右");
+
+      connect(direction, SIGNAL(currentIndexChanged(int)), this, SLOT(direction_on_changed(int)));
+
+      control_layout->addWidget(direction);
+
+
+
+      layout->setSpacing(0);
+      layout->addLayout(control_layout);
+
+      gameWindow->setLayout(layout);
+
+
+
+      cur_row = -1;
+      cur_column = -1;
+      original_color = my_board->item(0,0)->backgroundColor();
+      pre_not_valid = true;
+
+      // 初始化
+      for(int i = 0;i < BOARD_SIZE; ++i){
+          for(int j = 0;j < BOARD_SIZE; ++j){
+              valid_board[i][j] = 0;
+          }
+      }
+
+      my_plane_cnt = 0;
+
+      gameWindow->show();
 }
+
+void TcpClient::setPlane(int row, int column){
+    qDebug() << "我进来了呀\n";
+    cur_row = row;
+    cur_column = column;
+    // head
+    my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
+    valid_board[cur_row][cur_column] = 1;
+    // 上
+    if(direction_index == 0) {
+        // 位置合法
+        if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row + 3 <= 9) {
+            my_board->item(cur_row+1, cur_column-2)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column+2)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+2, cur_column)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+3, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+3, cur_column)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+3, cur_column+1)->setBackgroundColor(QColor("gray"));
+            valid_board[cur_row+1][cur_column-2] = 1;
+            valid_board[cur_row+1][cur_column-1] = 1;
+            valid_board[cur_row+1][cur_column] = 1;
+            valid_board[cur_row+1][cur_column+1] = 1;
+            valid_board[cur_row+1][cur_column+2] = 1;
+            valid_board[cur_row+2][cur_column] = 1;
+            valid_board[cur_row+3][cur_column-1] = 1;
+            valid_board[cur_row+3][cur_column] = 1;
+            valid_board[cur_row+3][cur_column+1] = 1;
+            my_plane_loc[my_plane_cnt][0] = cur_row * BOARD_SIZE + cur_column;
+            my_plane_loc[my_plane_cnt][1] = (cur_row + 3) * BOARD_SIZE + cur_column;
+            my_plane_cnt += 1;
+        } else {
+            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
+            valid_board[cur_row][cur_column] = 0;
+        }
+    } else if(direction_index == 1) { // 下
+        if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row - 3 >= 0) {
+            my_board->item(cur_row-1, cur_column-2)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column+2)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-2, cur_column)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-3, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-3, cur_column)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-3, cur_column+1)->setBackgroundColor(QColor("gray"));
+            valid_board[cur_row-1][cur_column-2] = 1;
+            valid_board[cur_row-1][cur_column-1] = 1;
+            valid_board[cur_row-1][cur_column] = 1;
+            valid_board[cur_row-1][cur_column+1] = 1;
+            valid_board[cur_row-1][cur_column+2] = 1;
+            valid_board[cur_row-2][cur_column] = 1;
+            valid_board[cur_row-3][cur_column-1] = 1;
+            valid_board[cur_row-3][cur_column] = 1;
+            valid_board[cur_row-3][cur_column+1] = 1;
+            my_plane_loc[my_plane_cnt][0] = cur_row * BOARD_SIZE + cur_column;
+            my_plane_loc[my_plane_cnt][1] = (cur_row - 3) * BOARD_SIZE + cur_column;
+            my_plane_cnt += 1;
+        } else {
+            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
+            valid_board[cur_row][cur_column] = 0;
+        }
+    } else if(direction_index == 2) { // 左
+        if(cur_column + 3 <= 9 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
+            my_board->item(cur_row+2, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-2, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row, cur_column+2)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column+3)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row, cur_column+3)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column+3)->setBackgroundColor(QColor("gray"));
+            valid_board[cur_row+2][cur_column+1] = 1;
+            valid_board[cur_row+1][cur_column+1] = 1;
+            valid_board[cur_row][cur_column+1] = 1;
+            valid_board[cur_row-1][cur_column+1] = 1;
+            valid_board[cur_row-2][cur_column+1] = 1;
+            valid_board[cur_row][cur_column+2] = 1;
+            valid_board[cur_row-1][cur_column+3] = 1;
+            valid_board[cur_row][cur_column+3] = 1;
+            valid_board[cur_row+1][cur_column+3] = 1;
+            my_plane_loc[my_plane_cnt][0] = cur_row * BOARD_SIZE + cur_column;
+            my_plane_loc[my_plane_cnt][1] = cur_row * BOARD_SIZE + (cur_column + 3);
+            my_plane_cnt += 1;
+        } else {
+            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
+            valid_board[cur_row][cur_column] = 0;
+        }
+    } else if(direction_index == 3) { // 右
+        if(cur_column - 3 >= 0 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
+            my_board->item(cur_row+2, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-2, cur_column-1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row, cur_column-2)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column-3)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row, cur_column-3)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column-3)->setBackgroundColor(QColor("gray"));
+            valid_board[cur_row+2][cur_column-1] = 1;
+            valid_board[cur_row+1][cur_column-1] = 1;
+            valid_board[cur_row][cur_column-1] = 1;
+            valid_board[cur_row-1][cur_column-1] = 1;
+            valid_board[cur_row-2][cur_column-1] = 1;
+            valid_board[cur_row][cur_column-2] = 1;
+            valid_board[cur_row-1][cur_column-3] = 1;
+            valid_board[cur_row][cur_column-3] = 1;
+            valid_board[cur_row+1][cur_column-3] = 1;
+            my_plane_loc[my_plane_cnt][0] = cur_row * BOARD_SIZE + cur_column;
+            my_plane_loc[my_plane_cnt][1] = cur_row * BOARD_SIZE + (cur_column - 3);
+            my_plane_cnt += 1;
+        } else {
+            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
+            valid_board[cur_row][cur_column] = 0;
+        }
+    }
+
+    cur_row = -1;
+    cur_column = -1;
+
+    // 摆放结束
+    if(my_plane_cnt == 3){
+        auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(0)->widget());
+        button->setEnabled(true);
+    }
+}
+
+
+void TcpClient::previewPlane(int row, int column){
+    qDebug() << "i am here\n" << row << " " << column;
+    if(row != cur_row || column != cur_column) {
+        // 需要恢复之前的
+        if(!(cur_row == -1 && cur_column == -1) && !pre_not_valid){
+            // head
+            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
+            // 上
+            if(direction_index == 0) {
+                // 位置合法
+                if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row + 3 <= 9) {
+                    my_board->item(cur_row+1, cur_column-2)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column+2)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+2, cur_column)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+3, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+3, cur_column)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+3, cur_column+1)->setBackgroundColor(original_color);
+                } else {
+                }
+            } else if(direction_index == 1) { // 下
+                if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row - 3 >= 0) {
+                    my_board->item(cur_row-1, cur_column-2)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column+2)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-2, cur_column)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-3, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-3, cur_column)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-3, cur_column+1)->setBackgroundColor(original_color);
+                } else {
+                }
+            } else if(direction_index == 2) { // 左
+                if(cur_column + 3 <= 9 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
+                    my_board->item(cur_row+2, cur_column+1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row, cur_column+1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-2, cur_column+1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row, cur_column+2)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column+3)->setBackgroundColor(original_color);
+                    my_board->item(cur_row, cur_column+3)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column+3)->setBackgroundColor(original_color);
+                } else {
+                }
+            } else if(direction_index == 3) { // 右
+                if(cur_column - 3 >= 0 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
+                    my_board->item(cur_row+2, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-2, cur_column-1)->setBackgroundColor(original_color);
+                    my_board->item(cur_row, cur_column-2)->setBackgroundColor(original_color);
+                    my_board->item(cur_row-1, cur_column-3)->setBackgroundColor(original_color);
+                    my_board->item(cur_row, cur_column-3)->setBackgroundColor(original_color);
+                    my_board->item(cur_row+1, cur_column-3)->setBackgroundColor(original_color);
+                } else {
+                }
+            }
+        }
+        cur_row = row;
+        cur_column = column;
+
+        int temp_board[BOARD_SIZE][BOARD_SIZE];
+        for(int i = 0;i < BOARD_SIZE; ++i){
+            for(int j = 0;j < BOARD_SIZE; ++j){
+                temp_board[i][j] = 0;
+            }
+        }
+        pre_not_valid = false;
+
+        // head
+        auto color = my_board->item(cur_row, cur_column)->backgroundColor();
+        my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
+        temp_board[cur_row][cur_column] = 1;
+        // 上
+        if(direction_index == 0) {
+            // 位置合法
+            if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row + 3 <= 9) {
+                temp_board[cur_row+1][cur_column-2] = 1;
+                temp_board[cur_row+1][cur_column-1] = 1;
+                temp_board[cur_row+1][cur_column] = 1;
+                temp_board[cur_row+1][cur_column+1] = 1;
+                temp_board[cur_row+1][cur_column+2] = 1;
+                temp_board[cur_row+2][cur_column] = 1;
+                temp_board[cur_row+3][cur_column-1] = 1;
+                temp_board[cur_row+3][cur_column] = 1;
+                temp_board[cur_row+3][cur_column+1] = 1;
+
+                int sum = 0;
+                for(int i = 0;i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += valid_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    my_board->item(cur_row+1, cur_column-2)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column+2)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+2, cur_column)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+3, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+3, cur_column)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+3, cur_column+1)->setBackgroundColor(QColor("gray"));
+                } else {
+                     my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                     pre_not_valid = true;
+                }
+            } else {
+                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                pre_not_valid = true;
+            }
+        } else if(direction_index == 1) { // 下
+            if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row - 3 >= 0) {
+                temp_board[cur_row-1][cur_column-2] = 1;
+                temp_board[cur_row-1][cur_column-1] = 1;
+                temp_board[cur_row-1][cur_column] = 1;
+                temp_board[cur_row-1][cur_column+1] = 1;
+                temp_board[cur_row-1][cur_column+2] = 1;
+                temp_board[cur_row-2][cur_column] = 1;
+                temp_board[cur_row-3][cur_column-1] = 1;
+                temp_board[cur_row-3][cur_column] = 1;
+                temp_board[cur_row-3][cur_column+1] = 1;
+
+                int sum = 0;
+                for(int i = 0;i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += valid_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    my_board->item(cur_row-1, cur_column-2)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column+2)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-2, cur_column)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-3, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-3, cur_column)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-3, cur_column+1)->setBackgroundColor(QColor("gray"));
+                } else {
+                    my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                    pre_not_valid = true;
+                }
+            } else {
+                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                pre_not_valid = true;
+            }
+        } else if(direction_index == 2) { // 左
+            if(cur_column + 3 <= 9 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
+                temp_board[cur_row+2][cur_column+1] = 1;
+                temp_board[cur_row+1][cur_column+1] = 1;
+                temp_board[cur_row][cur_column+1] = 1;
+                temp_board[cur_row-1][cur_column+1] = 1;
+                temp_board[cur_row-2][cur_column+1] = 1;
+                temp_board[cur_row][cur_column+2] = 1;
+                temp_board[cur_row-1][cur_column+3] = 1;
+                temp_board[cur_row][cur_column+3] = 1;
+                temp_board[cur_row+1][cur_column+3] = 1;
+
+                int sum = 0;
+                for(int i = 0;i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += valid_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    my_board->item(cur_row+2, cur_column+1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row, cur_column+1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-2, cur_column+1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row, cur_column+2)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column+3)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row, cur_column+3)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column+3)->setBackgroundColor(QColor("gray"));
+                } else {
+                    my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                    pre_not_valid = true;
+                }
+            } else {
+                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                pre_not_valid = true;
+            }
+        } else if(direction_index == 3) { // 右
+            if(cur_column - 3 >= 0 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
+                temp_board[cur_row+2][cur_column-1] = 1;
+                temp_board[cur_row+1][cur_column-1] = 1;
+                temp_board[cur_row][cur_column-1] = 1;
+                temp_board[cur_row-1][cur_column-1] = 1;
+                temp_board[cur_row-2][cur_column-1] = 1;
+                temp_board[cur_row][cur_column-2] = 1;
+                temp_board[cur_row-1][cur_column-3] = 1;
+                temp_board[cur_row][cur_column-3] = 1;
+                temp_board[cur_row+1][cur_column-3] = 1;
+
+                int sum = 0;
+                for(int i = 0;i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += valid_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    my_board->item(cur_row+2, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-2, cur_column-1)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row, cur_column-2)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row-1, cur_column-3)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row, cur_column-3)->setBackgroundColor(QColor("gray"));
+                    my_board->item(cur_row+1, cur_column-3)->setBackgroundColor(QColor("gray"));
+                } else {
+                    my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                    pre_not_valid = true;
+                }
+            } else {
+                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
+                pre_not_valid = true;
+            }
+        }
+    }
+
+}
+
 
 // TODO 实现配置
 void TcpClient::setConfigImpl(int fontsize, int color){
@@ -1560,64 +1393,6 @@ void TcpClient::on_signupBtn_clicked()
      socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
-}
-
-
-// 发送消息按钮 (FINISHED)
-void TcpClient::on_sendBtn_clicked(){
-    QWidget * cur = rightStackLayout->itemAt(curIndex)->widget();
-    QTextEdit* curTextEdit = static_cast<QTextEdit*>(cur->layout()->itemAt(2)->widget()->children().at(0));
-    QString text =  curTextEdit->toPlainText();
-
-    if(text == ""){
-        // 空消息不必发送
-        errorGUI("消息不能为空");
-        return;
-    }
-
-    curTextEdit->clear();  //清空输入栏的内容
-
-    QTextBrowser* curTextBrowser = static_cast<QTextBrowser*>(cur->layout()->itemAt(1)->widget());
-    curTextBrowser->append(username + " <" + QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") + "> ");
-    curTextBrowser->append(text);
-
-    qDebug() << "当前对话的用户" << curChatter->text();
-    qDebug() << "消息内容：" << text;
-
-
-    PacketHead sendPacketHead;
-
-    sendPacketHead.set_packet_type(PacketHead::kC2SText);
-    sendPacketHead.set_function_type(PacketHead::kC2STextToUsers);
-
-    //首先取出文本信息以便计算包长度
-    std::string textString = QStringToString(text);
-
-    //用户数量n（4字节） + 用户名（32 * n）字节 + 文本信息(string.length())
-    sendPacketHead.set_length(4 + 32 * 1 + textString.length());
-
-    //获取用户名对应的二维数组
-    char **uinfo = new char*[1];
-    uinfo[0] = new char[32 + 1];
-    if(curChatter->text() == "群聊") {
-        memset(uinfo[0], 0, 32);
-    }else{
-        strncpy(uinfo[0], stringPadding(QStringToString(curChatter->text()), 32).c_str(), 32);
-    }
-
-
-    ClientToServerTextToUsers sendClientToServerTextToUsers(sendPacketHead,
-        1, uinfo, textString.c_str());
-
-    char* tmpStr = new char[kPacketHeadLen + sendPacketHead.get_length() + 1];
-    sendClientToServerTextToUsers.get_string(tmpStr);
-    socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
-
-    delete[] tmpStr;
-
-    for(int i = 0; i < 1; ++i)
-        delete[] uinfo[i];
-    delete[] uinfo;
 }
 
 
@@ -1838,10 +1613,10 @@ void TcpClient::userLabelClicked(){
 
     int index = user2Index[user->text()];
     curIndex = index;
-    rightStackLayout->setCurrentIndex(index);
+//    rightStackLayout->setCurrentIndex(index);
     qDebug() << index;
-    QLabel* label = static_cast<QLabel*>(rightStackLayout->currentWidget()->layout()->itemAt(0)->widget());
-    label->setText(user->text());
+//    QLabel* label = static_cast<QLabel*>(rightStackLayout->currentWidget()->layout()->itemAt(0)->widget());
+//    label->setText(user->text());
 
     qDebug() << "点击了" << user->text() << " Index:" << index;
 }
@@ -2046,6 +1821,8 @@ void TcpClient::acceptInvitation()
 
 
     sendAcceptInvitationPacket();
+
+    InitGameWindow();
 }
 
 /*---------------------------------------------------------------*/
@@ -2104,7 +1881,9 @@ void TcpClient::recvAcceptInvitation()
     //GUI部分，关闭所有邀请的弹窗，游戏开始，可以摆放飞机
     inviteSrcBox->close();
     delete inviteSrcBox;
-}
+
+    InitGameWindow();
+ }
 
 //TODO
 void TcpClient::recvDeclineInvitation()
@@ -2237,6 +2016,11 @@ void TcpClient::gameReady()
     unsigned short loc_small[loc_num];
     unsigned short loc_big[loc_num];
 
+    for(int i = 0;i < loc_num; ++i) {
+        loc_small[i] = my_plane_loc[i][0];
+        loc_big[i] = my_plane_loc[i][1];
+    }
+
 
     //如果合法，发送gameReady包
     PacketHead sendPacketHead;
@@ -2259,6 +2043,7 @@ void TcpClient::gameReady()
 void TcpClient::gameStart()
 {
     //GUI部分，接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
+
 }
 
 
@@ -2689,18 +2474,18 @@ void TcpClient::readyRead(){
                 current_read_state = READ_PACKET_HEAD;
                 current_byte_num_to_read = kPacketHeadLen;
                 break;
-            case READ_SERVER_TO_CLIENT_TEXT_SIMPLE_TEXT://收到文本信息，将文本信息放在相应的报头中，然后调用显示文本信息
-                my_server_to_client_simple_text.set_string(my_packet_head, set_byte_array.constData());
-                showText();
-                current_read_state = READ_PACKET_HEAD;
-                current_byte_num_to_read = kPacketHeadLen;
-                break;
-            case READ_SERVER_TO_CLIENT_TEXT_FILE_INFO://收到文件相关信息，将相应信息放入报头，然后显示文件信息,这一步只有回看的时候收到
-                my_server_to_client_file_info.set_string(my_packet_head, set_byte_array.constData());
-                showFileInfo();
-                current_read_state = READ_PACKET_HEAD;
-                current_byte_num_to_read = kPacketHeadLen;
-                break;
+//            case READ_SERVER_TO_CLIENT_TEXT_SIMPLE_TEXT://收到文本信息，将文本信息放在相应的报头中，然后调用显示文本信息
+//                my_server_to_client_simple_text.set_string(my_packet_head, set_byte_array.constData());
+//                showText();
+//                current_read_state = READ_PACKET_HEAD;
+//                current_byte_num_to_read = kPacketHeadLen;
+//                break;
+//            case READ_SERVER_TO_CLIENT_TEXT_FILE_INFO://收到文件相关信息，将相应信息放入报头，然后显示文件信息,这一步只有回看的时候收到
+//                my_server_to_client_file_info.set_string(my_packet_head, set_byte_array.constData());
+//                showFileInfo();
+//                current_read_state = READ_PACKET_HEAD;
+//                current_byte_num_to_read = kPacketHeadLen;
+//                break;
             /*
             这一步不需要了，被notify包所取代
             case READ_SERVER_TO_CLIENT_TEXT_FILE_CONTAIN://收到文件内容信息，将相应信息放入报头，然后进行下载操作
@@ -2718,41 +2503,41 @@ void TcpClient::readyRead(){
                 current_byte_num_to_read = kPacketHeadLen;
                 break;
 
-            case READ_C2C_FILE_NOTIFY_REQUEST://recv收到请求用户发送包
-                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
-                showTryToSend();
-                current_read_state = READ_PACKET_HEAD;
-                current_byte_num_to_read = kPacketHeadLen;
-                break;
+//            case READ_C2C_FILE_NOTIFY_REQUEST://recv收到请求用户发送包
+//                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
+//                showTryToSend();
+//                current_read_state = READ_PACKET_HEAD;
+//                current_byte_num_to_read = kPacketHeadLen;
+//                break;
 
-            case READ_C2C_FILE_NOTIFY_ACCEPT://sender收到同意请求包
-                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
-                sendFileData();//向recv发送数据包
-                current_read_state = READ_PACKET_HEAD;
-                current_byte_num_to_read = kPacketHeadLen;
-                break;
+//            case READ_C2C_FILE_NOTIFY_ACCEPT://sender收到同意请求包
+//                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
+//                sendFileData();//向recv发送数据包
+//                current_read_state = READ_PACKET_HEAD;
+//                current_byte_num_to_read = kPacketHeadLen;
+//                break;
 
-            case READ_C2C_FILE_DATA://recv收到数据包
-                qDebug() << "READ_C2C_FILE_DATA";
-                my_sender_to_receiver_file_data.set_string(my_packet_head, set_byte_array.constData());
-                writeDataAndRequest();//写数据并发送请求用户发送包
-                current_read_state = READ_PACKET_HEAD;
-                current_byte_num_to_read = kPacketHeadLen;
-                break;
+//            case READ_C2C_FILE_DATA://recv收到数据包
+//                qDebug() << "READ_C2C_FILE_DATA";
+//                my_sender_to_receiver_file_data.set_string(my_packet_head, set_byte_array.constData());
+//                writeDataAndRequest();//写数据并发送请求用户发送包
+//                current_read_state = READ_PACKET_HEAD;
+//                current_byte_num_to_read = kPacketHeadLen;
+//                break;
 
-            case READ_C2C_FILE_NOTIFY_CANCEL_RECV://send收到取消接收包
-                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
-                cancelSendFileDataPassive();//取消发送
-                current_read_state = READ_PACKET_HEAD;
-                current_byte_num_to_read = kPacketHeadLen;
-                break;
+//            case READ_C2C_FILE_NOTIFY_CANCEL_RECV://send收到取消接收包
+//                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
+//                cancelSendFileDataPassive();//取消发送
+//                current_read_state = READ_PACKET_HEAD;
+//                current_byte_num_to_read = kPacketHeadLen;
+//                break;
 
-            case READ_C2C_FILE_NOTIFY_CANCEL_SEND://recv收到取消发送包
-                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
-                cancelRecvFileDataPassive();//取消接收
-                current_read_state = READ_PACKET_HEAD;
-                current_byte_num_to_read = kPacketHeadLen;
-                break;
+//            case READ_C2C_FILE_NOTIFY_CANCEL_SEND://recv收到取消发送包
+//                my_sender_to_receiver_file_notify.set_string(my_packet_head, set_byte_array.constData());
+//                cancelRecvFileDataPassive();//取消接收
+//                current_read_state = READ_PACKET_HEAD;
+//                current_byte_num_to_read = kPacketHeadLen;
+//                break;
 
             /*----------------------------------------------------------------------
             Extend包的额外状态
@@ -2814,22 +2599,28 @@ void TcpClient::readyRead(){
 }
 
 
-void TcpClient::on_fileDialogBtn_clicked(){
-    QString filename = QFileDialog::getOpenFileName(
-                this,
-                "Open Document",
-                QDir::currentPath(),
-                 tr("Allfile(*.*)")
-                );
-
-    if(filename == ""){
-        return;
-    }
-//    qDebug() << filename;
-    int index = filename.lastIndexOf('/');
-    filename = filename.mid(index+1, -1);
-
-
-    tryToSend(filename);
+// TODO
+void TcpClient::direction_on_changed(int index){
+    qDebug() << index << "\n";
+    direction_index = index;
 }
 
+
+// TODO
+void TcpClient::my_board_doubleclicked(int row, int column){
+    qDebug() << "double clicked —— colunm:" << column << " row:" << row << "\n";
+
+    // setPlane
+    setPlane(row, column);
+}
+
+void TcpClient::oppo_board_doubleclicked(int row, int column) {
+    qDebug() << "colunm:" << column << " row:" << row << "\n";
+}
+
+void TcpClient::my_board_entered(int row, int column){
+    qDebug() << "clicked —— colunm:" << column << " row:" << row << "\n";
+
+    // previewPlane
+    previewPlane(row, column);
+}

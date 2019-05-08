@@ -12,6 +12,7 @@
 #include <map>
 #include <QQueue>
 #include <QMessageBox>
+#include <QTableWidget>
 #include "../common/client_to_server.h"
 #include "../common/packet_head.h"
 #include "../common/extend_packet.h"
@@ -58,14 +59,6 @@ enum ReadState
 
 const QString COLOR[8] = {"black", "red", "grey", "blue", "green", "yellow", "orange", "purple"};
 
-struct fileTrans
-{
-    FILE* fd = nullptr;
-    int blockCnt = 0;
-    int len = 0;
-    fileTrans() = default;
-    fileTrans(FILE* _fd, int _blockCnt, int _len) : fd(_fd), blockCnt(_blockCnt), len(_len) {}
-};
 
 class TcpClient : public QMainWindow
 {
@@ -106,67 +99,27 @@ public:
     void online();
 
 
-
-    void showText();
-
-    //显示文件信息
-    void showFileInfo();
-
-    //将文件内容从包写入文件，注意在调用该函数前，文件内容已经被写入了ServerToClientTextFileContain包，因此这部分只要显示下载文件完成等即可
-    void writeFileContain();
-
-
     //单个配置对应的一行String
     std::string singleConfigString(std::string configKey);
 
     //将config转换成string输出
     std::string configString();
 
-
-
     // read config
     void setConfig();
 
     void insertListWidget(QString name, bool isOnline, bool isInGame);
 
-    void selectAll();
-
-    void selectNone();
-
-    void getCheckState(QVector<bool>& vecIsChecked,  QVector<QString>& vecName);
-
     void setUserStatus(QString name, bool isOnline, bool isInGame);
 
-    void showTextImpl(QString name, QString msg, QString tm, bool isMyself=false);
+    void InitGameWindow();
 
-    void tryToSend(QString filename);
+    void previewPlane(int row, int column);
 
-    void InitRightLayout();
+    void setPlane(int row, int column);
 
-
-
-    void showTryToSend();
-
-    void sendFileData();//发送数据包
-
-    void writeDataAndRequest();//rec从包中获得数据并向send发送新的请求
-
-
-    void cancelSendFileDataPassive();//send被动取消发送，由对面的取消包触发
-
-    void cancelRecvFileDataPassive();//recv被动取消接收，由对面的取消包触发
-
-    void showFileTransferring(std::string senderName, std::string recvName, std::string fileName, bool isSender);
-
-    void errorFileTransferring(std::string senderName, std::string recvName, std::string fileName);
-
-    void cancelFileTransferring(std::string senderName, std::string recvName, std::string fileName, bool isSender);
-
-    void doneFileTransferring(std::string senderName, std::string recvName, std::string fileName, bool isSender);
 
     void setConfigImpl(int fontsize, int color);
-
-    void setEnableFileTransfer(bool isEnable);
 
 
     bool isConnected();
@@ -232,7 +185,6 @@ private slots:
 
     void on_signupBtn_clicked();
 
-    void on_sendBtn_clicked();
 
     // 在登录界面，点击“修改密码”，将显示对话框
     void on_changePwdBtn_clicked();
@@ -257,20 +209,6 @@ private slots:
     //向server发送配置包
     void sendConfig();
 
-    void cls();
-
-    //发送请求回看包
-    void askForReview();
-
-    void on_fileDialogBtn_clicked();
-
-
-    void acceptRecv();
-
-    void cancelRecvFileDataActive();//recv主动取消发送 (GUI触发)
-
-    void cancelSendFileDataActive();//send主动取消发送（GUI触发）
-
 
     void inviteGame();
 
@@ -281,6 +219,15 @@ private slots:
     void declineInvitation();
 
     void cancelInvitationActive();
+
+    // board
+    void direction_on_changed(int);
+
+    void my_board_doubleclicked(int, int);
+
+    void oppo_board_doubleclicked(int, int);
+
+    void my_board_entered(int, int);
 private:
     PacketHead my_packet_head;
     ServerToClientReportSuccess my_server_to_client_report_success;
@@ -316,14 +263,12 @@ private:
     QString password;
     QString ip;
     std::map<std::string, std::string> configMap;
-    std::map<std::string, fileTrans> sendFile;
-    std::map<std::string, fileTrans> recvFile;
     unsigned short port;
 
     ClickableLabel * preChatter; // 上一个与你对话的用户
     QLabel * curChatter; // 现在与你对话的用户
     QMap <QPushButton*,QString> button2name;
-    QStackedLayout * rightStackLayout; // 现在与你对话的用户的聊天窗
+    QWidget * gameWindow; // 现在的游戏界面
     QHBoxLayout * chatRoomMainLayout;
     QMap <QString, int> user2Index;
     int curIndex;
@@ -354,7 +299,20 @@ private:
     QMap <QAbstractButton*, QString> rejectbutton2opponame; // 邀请人的名字
 
     // board
+    QTableWidget * my_board;
+    QTableWidget * oppo_board;
 
+    static const int BOARD_SIZE = 10;
+    static const int PLANE_NUM = 3;
+    int direction_index;
+    int cur_row;
+    int cur_column;
+    QColor original_color;
+
+    int valid_board[BOARD_SIZE][BOARD_SIZE];
+    bool pre_not_valid;
+    unsigned short my_plane_loc[PLANE_NUM][2];
+    int my_plane_cnt;
 };
 
 #endif // TCPCLIENT_H
