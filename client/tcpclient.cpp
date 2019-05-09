@@ -944,7 +944,7 @@ void TcpClient::setPlane(int row, int column){
     auto random_color = PLANE_COLOR[my_plane_cnt];
     // head
     my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
-    valid_board[cur_row][cur_column] = 1;
+    valid_board[cur_row][cur_column] = 2;
 
 
     int temp_board[BOARD_SIZE][BOARD_SIZE];
@@ -2693,6 +2693,10 @@ void TcpClient::replyPointState()
     int column = static_cast<int>(loc_small % BOARD_SIZE);
     qDebug() << "收到的位置" << loc_small;
     my_board->item(row, column)->setText("X");
+    QFont ft;
+    ft.setPointSize(50);
+    my_board->item(row, column)->setFont(ft);
+    my_board->item(row, column)->setTextColor(QColor("white"));
 
     unsigned short PointState;
 
@@ -2701,6 +2705,7 @@ void TcpClient::replyPointState()
     static const unsigned short kExtendReplyPreHurt=0x01; // 猜测伤飞机
     static const unsigned short kExtendReplyPreDestroy=0x02; // 猜测毁飞机
     */
+    PointState = valid_board[row][column];
 
     //回复棋盘坐标和相应的状态PointState，然后转为先手
     PacketHead sendPacketHead;
@@ -2725,12 +2730,26 @@ void TcpClient::recvReplyPointState(const unsigned short res)
 //    static const unsigned short kExtendReplyPreNo=0x00; // 猜测未命中
 //    static const unsigned short kExtendReplyPreHurt=0x01; // 猜测伤飞机
 //    static const unsigned short kExtendReplyPreDestroy=0x02; // 猜测毁飞机
+    int row = static_cast<int>(res / BOARD_SIZE);
+    int column = static_cast<int>(res % BOARD_SIZE);
     if(res == PacketHead::kExtendReplyPreNo){
-
+        oppo_board->item(row, column)->setText("O");
+        QFont ft;
+        ft.setPointSize(50);
+        oppo_board->item(row, column)->setFont(ft);
+        oppo_board->item(row, column)->setTextColor(QColor("blue"));
     } else if(res == PacketHead::kExtendReplyPreHurt) {
-
+        oppo_board->item(row, column)->setText("X");
+        QFont ft;
+        ft.setPointSize(50);
+        oppo_board->item(row, column)->setFont(ft);
+        oppo_board->item(row, column)->setTextColor(QColor("white"));
     } else if(res == PacketHead::kExtendReplyPreDestroy){
-
+        oppo_board->item(row, column)->setText("+");
+        QFont ft;
+        ft.setPointSize(50);
+        oppo_board->item(row, column)->setFont(ft);
+        oppo_board->item(row, column)->setTextColor(QColor("white"));
     }
 }
 
