@@ -2006,12 +2006,14 @@ void TcpClient::offensive()
 {
     /*GUI部分，将状态转为先手，然后恢复oppoBoard棋盘（取消冻结）*/
     oppo_board->setEnabled(true);
+    errorGUI("您是先手");
 }
 
 void TcpClient::defensive()
 {
     /*GUI部分，将状态转为后手，然后冻结oppoBoard棋盘*/
     oppo_board->setEnabled(false);
+    errorGUI("您是后手");
 }
 
 //TODO
