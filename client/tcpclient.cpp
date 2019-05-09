@@ -2835,17 +2835,19 @@ void TcpClient::replyAssertPlanePos()
             }
         }
 
+        QColor color = QColor("gray");
+        my_board->item(row, column)->setBackgroundColor(color);
         valid_board[row][column] = 0;
         if(direction_index == 0) {
-                            my_board->item(row+1, column-2)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column+1)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column+2)->setBackgroundColor(original_color);
-                            my_board->item(row+2, column)->setBackgroundColor(original_color);
-                            my_board->item(row+3, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row+3, column)->setBackgroundColor(original_color);
-                            my_board->item(row+3, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column-2)->setBackgroundColor(color);
+                            my_board->item(row+1, column-1)->setBackgroundColor(color);
+                            my_board->item(row+1, column)->setBackgroundColor(color);
+                            my_board->item(row+1, column+1)->setBackgroundColor(color);
+                            my_board->item(row+1, column+2)->setBackgroundColor(color);
+                            my_board->item(row+2, column)->setBackgroundColor(color);
+                            my_board->item(row+3, column-1)->setBackgroundColor(color);
+                            my_board->item(row+3, column)->setBackgroundColor(color);
+                            my_board->item(row+3, column+1)->setBackgroundColor(color);
                             valid_board[row+1][column-2] = 0;
                             valid_board[row+1][column-1] = 0;
                             valid_board[row+1][column] = 0;
@@ -2858,15 +2860,15 @@ void TcpClient::replyAssertPlanePos()
 
                 } else if(direction_index == 1) { // 下
 
-                            my_board->item(row-1, column-2)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column+1)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column+2)->setBackgroundColor(original_color);
-                            my_board->item(row-2, column)->setBackgroundColor(original_color);
-                            my_board->item(row-3, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row-3, column)->setBackgroundColor(original_color);
-                            my_board->item(row-3, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column-2)->setBackgroundColor(color);
+                            my_board->item(row-1, column-1)->setBackgroundColor(color);
+                            my_board->item(row-1, column)->setBackgroundColor(color);
+                            my_board->item(row-1, column+1)->setBackgroundColor(color);
+                            my_board->item(row-1, column+2)->setBackgroundColor(color);
+                            my_board->item(row-2, column)->setBackgroundColor(color);
+                            my_board->item(row-3, column-1)->setBackgroundColor(color);
+                            my_board->item(row-3, column)->setBackgroundColor(color);
+                            my_board->item(row-3, column+1)->setBackgroundColor(color);
                             valid_board[row-1][column-2] = 0;
                             valid_board[row-1][column-1] = 0;
                             valid_board[row-1][column] = 0;
@@ -2881,15 +2883,15 @@ void TcpClient::replyAssertPlanePos()
 
                 } else if(direction_index == 2) { // 左
 
-                            my_board->item(row+2, column+1)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column+1)->setBackgroundColor(original_color);
-                            my_board->item(row, column+1)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column+1)->setBackgroundColor(original_color);
-                            my_board->item(row-2, column+1)->setBackgroundColor(original_color);
-                            my_board->item(row, column+2)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column+3)->setBackgroundColor(original_color);
-                            my_board->item(row, column+3)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column+3)->setBackgroundColor(original_color);
+                            my_board->item(row+2, column+1)->setBackgroundColor(color);
+                            my_board->item(row+1, column+1)->setBackgroundColor(color);
+                            my_board->item(row, column+1)->setBackgroundColor(color);
+                            my_board->item(row-1, column+1)->setBackgroundColor(color);
+                            my_board->item(row-2, column+1)->setBackgroundColor(color);
+                            my_board->item(row, column+2)->setBackgroundColor(color);
+                            my_board->item(row-1, column+3)->setBackgroundColor(color);
+                            my_board->item(row, column+3)->setBackgroundColor(color);
+                            my_board->item(row+1, column+3)->setBackgroundColor(color);
                             valid_board[row+2][column+1] = 0;
                             valid_board[row+1][column+1] = 0;
                             valid_board[row][column+1] = 0;
@@ -2903,15 +2905,15 @@ void TcpClient::replyAssertPlanePos()
 
                 } else if(direction_index == 3) { // 右
 
-                            my_board->item(row+2, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row-2, column-1)->setBackgroundColor(original_color);
-                            my_board->item(row, column-2)->setBackgroundColor(original_color);
-                            my_board->item(row-1, column-3)->setBackgroundColor(original_color);
-                            my_board->item(row, column-3)->setBackgroundColor(original_color);
-                            my_board->item(row+1, column-3)->setBackgroundColor(original_color);
+                            my_board->item(row+2, column-1)->setBackgroundColor(color);
+                            my_board->item(row+1, column-1)->setBackgroundColor(color);
+                            my_board->item(row, column-1)->setBackgroundColor(color);
+                            my_board->item(row-1, column-1)->setBackgroundColor(color);
+                            my_board->item(row-2, column-1)->setBackgroundColor(color);
+                            my_board->item(row, column-2)->setBackgroundColor(color);
+                            my_board->item(row-1, column-3)->setBackgroundColor(color);
+                            my_board->item(row, column-3)->setBackgroundColor(color);
+                            my_board->item(row+1, column-3)->setBackgroundColor(color);
                             valid_board[row+2][column-1] = 0;
                             valid_board[row+1][column-1] = 0;
                             valid_board[row][column-1] = 0;
