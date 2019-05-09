@@ -2687,6 +2687,7 @@ void TcpClient::askForPointState()
 //TODO
 void TcpClient::replyPointState()
 {
+    unsigned short loc_small = my_extend_packet_playing.get_loc_small();
     //GUI部分，myBoard显示对方猜的位置和结果
 
     unsigned short PointState;
@@ -2754,6 +2755,8 @@ void TcpClient::assertPlanePos()
 //TODO
 void TcpClient::replyAssertPlanePos()
 {
+    unsigned short loc_small = my_extend_packet_playing.get_loc_small();
+    unsigned short loc_big = my_extend_packet_playing.get_loc_big();
     //GUI部分，显示对方的断言位置和结果
 
     unsigned short assertRes;
@@ -3199,6 +3202,20 @@ void TcpClient::readyRead(){
             case READ_EXTEND_BUILD_AND_DESTROY_NOT_START:
                 my_extend_packet_build_and_destroy.set_string(my_packet_head, set_byte_array.constData());
                 cancelInvitationPassive();//对方主动取消了邀请
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+
+            case READ_EXTEND_PREDICT_GUESS:
+                my_extend_packet_playing.set_string(my_packet_head, set_byte_array.constData());
+                replyPointState();//收到了猜测位置包
+                current_read_state = READ_PACKET_HEAD;
+                current_byte_num_to_read = kPacketHeadLen;
+                break;
+            
+            case READ_EXTEND_PREDICT_JUDGE:
+                my_extend_packet_playing.set_string(my_packet_head, set_byte_array.constData());
+                replyAssertPlanePos();//收到了断言位置包
                 current_read_state = READ_PACKET_HEAD;
                 current_byte_num_to_read = kPacketHeadLen;
                 break;
