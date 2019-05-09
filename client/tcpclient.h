@@ -13,6 +13,7 @@
 #include <QQueue>
 #include <QMessageBox>
 #include <QTableWidget>
+#include <QButtonGroup>
 #include "../common/client_to_server.h"
 #include "../common/packet_head.h"
 #include "../common/extend_packet.h"
@@ -115,6 +116,8 @@ public:
     void InitGameWindow();
 
     void previewPlane(int row, int column);
+
+    void previewOppoPlane(int row, int column);
 
     void setPlane(int row, int column);
 
@@ -227,9 +230,15 @@ private slots:
 
     void my_board_doubleclicked(int, int);
 
-    void oppo_board_doubleclicked(int, int);
+    void oppo_board_clicked(int, int);
+
+    void oppo_board_entered(int, int);
 
     void my_board_entered(int, int);
+
+    void on_setstate();
+
+    void on_ackbtn_clicked();
 private:
     PacketHead my_packet_head;
     ServerToClientReportSuccess my_server_to_client_report_success;
@@ -312,9 +321,16 @@ private:
     QColor original_color;
 
     int valid_board[BOARD_SIZE][BOARD_SIZE];
+    int guess_board[BOARD_SIZE][BOARD_SIZE];
     bool pre_not_valid;
+    bool pre_not_valid_oppo;
     unsigned short my_plane_loc[PLANE_NUM][2];
     int my_plane_cnt;
+
+    int cur_oppo_row;
+    int cur_oppo_column;
+
+    bool isGuess;
 };
 
 #endif // TCPCLIENT_H

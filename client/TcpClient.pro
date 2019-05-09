@@ -39,8 +39,8 @@ HEADERS += \
     ../common/extend_packet.h \
     ../common/packet_head.h \
     ../common/server_to_client.h \
-        tcpclient.h \
-    clickablelabel.h
+    clickablelabel.h \
+        tcpclient.h
 
 FORMS += \
         tcpclient.ui
