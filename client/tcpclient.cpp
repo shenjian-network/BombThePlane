@@ -2689,6 +2689,10 @@ void TcpClient::replyPointState()
 {
     unsigned short loc_small = my_extend_packet_playing.get_loc_small();
     //GUI部分，myBoard显示对方猜的位置和结果
+    int row = static_cast<int>(loc_small / BOARD_SIZE);
+    int column = static_cast<int>(loc_small % BOARD_SIZE);
+    qDebug() << "收到的位置" << loc_small;
+    my_board->item(row, column)->setText("X");
 
     unsigned short PointState;
     //回复棋盘坐标和相应的状态PointState，然后转为先手
