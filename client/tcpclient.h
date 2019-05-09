@@ -152,7 +152,7 @@ public:
 
 
 
-    void gameStart();
+    void gameStart(bool isOffensive);
 
     void askForPointState();
 
