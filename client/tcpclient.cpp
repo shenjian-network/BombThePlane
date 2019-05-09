@@ -2695,10 +2695,17 @@ void TcpClient::replyPointState()
     my_board->item(row, column)->setText("X");
 
     unsigned short PointState;
+
+    /*
+    static const unsigned short kExtendReplyPreNo=0x00; // 猜测未命中
+    static const unsigned short kExtendReplyPreHurt=0x01; // 猜测伤飞机
+    static const unsigned short kExtendReplyPreDestroy=0x02; // 猜测毁飞机
+    */
+
     //回复棋盘坐标和相应的状态PointState，然后转为先手
     PacketHead sendPacketHead;
 
-    sendPacketHead.set_packet_type(PacketHead::kExtendPredict);
+    sendPacketHead.set_packet_type(PacketHead::kExtendReplyPre);
     sendPacketHead.set_function_type(PointState);
     sendPacketHead.set_length(0);
 
@@ -2764,11 +2771,15 @@ void TcpClient::replyAssertPlanePos()
     //GUI部分，显示对方的断言位置和结果
 
     unsigned short assertRes;
+    /*
+    static const unsigned short kExtendReplyPreFail=0x03; // 断言未中
+    static const unsigned short kExtendReplyPreSuccess=0x04; // 断言命中
+    */
 
     //判断是否猜中并发送回复断言包
     PacketHead sendPacketHead;
 
-    sendPacketHead.set_packet_type(PacketHead::kExtendPredict);
+    sendPacketHead.set_packet_type(PacketHead::kExtendReplyPre);
     sendPacketHead.set_function_type(assertRes);
     sendPacketHead.set_length(0);
 
@@ -2804,7 +2815,10 @@ void TcpClient::replyAssertPlanePos()
 void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
 {
     //GUI部分，显示断言结果，如果猜中要将整个飞机显示出来，否则显示断言错误（比如闪烁几下）
-
+    /*
+    static const unsigned short kExtendReplyPreFail=0x03; // 断言未中
+    static const unsigned short kExtendReplyPreSuccess=0x04; // 断言命中
+    */
 }
 
 //TODO
