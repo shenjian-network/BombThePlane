@@ -2051,7 +2051,7 @@ void TcpClient::gameReady()
 }
 
 //TODO
-void TcpClient::gameStart()
+void TcpClient::gameStart(bool isOffensive)
 {
     //GUI部分，接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
     qDebug() << "进入gameStart\n";
@@ -2412,11 +2412,11 @@ void TcpClient::readyRead(){
                         switch(my_packet_head.get_function_type())
                         {
                             case PacketHead::kExtendBeginOffensive://先手开始游戏包
-                                gameStart();
+                                gameStart(true);
                                 offensive();
                                 break;
                             case PacketHead::kExtendReadyDeffensive://后手开始游戏包
-                                gameStart();
+                                gameStart(false);
                                 defensive();
                                 break;
                             default:
