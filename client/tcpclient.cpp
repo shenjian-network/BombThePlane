@@ -851,6 +851,7 @@ void TcpClient::InitGameWindow(){
       }
       oppo_board->setEditTriggers(QTableWidget::NoEditTriggers);
       connect(oppo_board, SIGNAL(cellDoubleClicked(int, int)), this, SLOT(oppo_board_doubleclicked(int, int)));
+      oppo_board->setEnabled(false);
       board_layout->addWidget(oppo_board);
 
       layout->addLayout(board_layout);
@@ -909,7 +910,7 @@ void TcpClient::setPlane(int row, int column){
     qDebug() << "我进来了呀\n";
     cur_row = row;
     cur_column = column;
-    auto random_color = QColor::fromHsl(rand()%360,rand()%256,rand()%200);
+    auto random_color = PLANE_COLOR[my_plane_cnt];
     // head
     my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
     valid_board[cur_row][cur_column] = 1;
@@ -2004,11 +2005,13 @@ void TcpClient::cancelInvitationPassive()
 void TcpClient::offensive()
 {
     /*GUI部分，将状态转为先手，然后恢复oppoBoard棋盘（取消冻结）*/
+    oppo_board->setEnabled(true);
 }
 
 void TcpClient::defensive()
 {
     /*GUI部分，将状态转为后手，然后冻结oppoBoard棋盘*/
+    oppo_board->setEnabled(false);
 }
 
 //TODO
@@ -2052,6 +2055,7 @@ void TcpClient::gameStart()
 {
     //GUI部分，接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
     qDebug() << "进入gameStart\n";
+
 }
 
 

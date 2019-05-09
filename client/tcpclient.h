@@ -58,7 +58,7 @@ enum ReadState
 
 
 const QString COLOR[8] = {"black", "red", "grey", "blue", "green", "yellow", "orange", "purple"};
-
+const QString PLANE_COLOR[] = {"red", "yellow", "green"};
 
 class TcpClient : public QMainWindow
 {
