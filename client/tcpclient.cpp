@@ -2396,16 +2396,15 @@ void TcpClient::readyRead(){
                         }
                     break;
 
-                    case PacketHead::kExtendReady://准备游戏包
+                    case PacketHead::kExtendBegin://准备游戏包
                         switch(my_packet_head.get_function_type())
                         {
-                            case PacketHead::kExtendBegin://对局开始包
-                                gameStart();
-                                break;
                             case PacketHead::kExtendBeginOffensive://先手开始游戏包
+                                gameStart();
                                 offensive();
                                 break;
                             case PacketHead::kExtendReadyDeffensive://后手开始游戏包
+                                gameStart();
                                 defensive();
                                 break;
                             default:
