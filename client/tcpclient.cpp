@@ -262,13 +262,17 @@ void TcpClient::errorGUI(const unsigned short & err_type){
 
 // 显示错误信息窗口，重载 （FINISHED）
 void TcpClient::errorGUI(const QString& err){
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::information(this, tr("错误"), err);
+    auto box = new QMessageBox(QMessageBox::Information, "信息", err);
+    box->setStandardButtons(QMessageBox::Cancel);
+    box->setWindowModality(Qt::NonModal);
+    box->show();
 }
 
 void TcpClient::successGUI(const QString& err){
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::information(this, tr("成功"), err);
+    auto box = new QMessageBox(QMessageBox::Information, "成功", err);
+    box->setStandardButtons(QMessageBox::Cancel);
+    box->setWindowModality(Qt::NonModal);
+    box->show();
 }
 
 void TcpClient::inviteSrcGUI(const QString& name) {
@@ -2246,12 +2250,12 @@ void TcpClient::inGame()
     }
     else
     {   
-//        //TODO
-//        //GUI部分，显示player1和player2的游戏状态，冻结邀请按钮（注意其中一人是自己的特殊情况）
-//        if(player_one_name != username)
-//            setUserStatus(player_one_name, true, false);
-//        if(player_two_name != username)
-//            setUserStatus(player_two_name, true, false);
+        //TODO
+        //GUI部分，显示player1和player2的游戏状态，冻结邀请按钮（注意其中一人是自己的特殊情况）
+        if(player_one_name != username)
+            setUserStatus(player_one_name, true, true);
+        if(player_two_name != username)
+            setUserStatus(player_two_name, true, true);
     }
 }
 
@@ -2264,12 +2268,12 @@ void TcpClient::offGame()
     QString player_one_name = my_extend_packet_status.get_player_one_name();
     QString player_two_name = my_extend_packet_status.get_player_two_name();
 
-//    //TODO
-//    /*GUI部分，恢复两个人的邀请按钮, 注意特判其中一个人是自己的情况*/
-//    if(player_one_name != username)
-//        setUserStatus(player_one_name, true, false);
-//    if(player_two_name != username)
-//        setUserStatus(player_two_name, true, false);
+    //TODO
+    /*GUI部分，恢复两个人的邀请按钮, 注意特判其中一个人是自己的情况*/
+    if(player_one_name != username)
+        setUserStatus(player_one_name, true, false);
+    if(player_two_name != username)
+        setUserStatus(player_two_name, true, false);
 }
 
 //这是一个槽函数, 绑定的是邀请按钮
@@ -2594,7 +2598,9 @@ void TcpClient::offensive()
 {
     /*GUI部分，将状态转为先手，然后恢复oppoBoard棋盘（取消冻结）*/
     oppo_board->setEnabled(true);
+    qDebug() << "your turn前";
     errorGUI("your turn");
+    qDebug() << "your turn后";
 }
 
 void TcpClient::defensive()
@@ -2965,9 +2971,9 @@ void TcpClient::replyAssertPlanePos()
         delete[] tmpStr;
 
         gameOver(false);
+    } else {
+        offensive();
     }
-
-    offensive();
 }
 
 //TODO
@@ -2980,7 +2986,9 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
     */
     if(res == 3){
         // do nothing
+        qDebug() << "断言成功前";
         errorGUI("断言成功!");
+        qDebug() << "断言成功后";
     } else if(res == 4){
         // 需要去掉
         int row = static_cast<int>(guess_loc[0] / BOARD_SIZE);
@@ -3072,8 +3080,9 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
                             guess_board[row+1][column-3] = 0;
 
                 }
-
+        qDebug() << "断言错误前";
         errorGUI("断言错误!");
+        qDebug() << "断言错误后";
     }
 }
 
@@ -3086,11 +3095,15 @@ void TcpClient::gameOver(bool isWinner)
     */
     if(isWinner)
     {
+//        qDebug() << "您赢了";
         errorGUI("您赢了");
+        gameWindow->close();
     }
     else
     {
+//        qDebug() << "您输了";
         errorGUI("您输了");
+        gameWindow->close();
     }
 }
 
@@ -3309,6 +3322,7 @@ void TcpClient::readyRead(){
                                 current_byte_num_to_read = my_packet_head.get_length();
                                 break;
                             case PacketHead::kExtendPredictJudge://断言位置包
+                                qDebug() << "Receive Judge";
                                 current_read_state = READ_EXTEND_PREDICT_JUDGE;
                                 current_byte_num_to_read = my_packet_head.get_length();
                                 break;
@@ -3489,7 +3503,9 @@ void TcpClient::readyRead(){
             
             case READ_EXTEND_PREDICT_JUDGE:
                 my_extend_packet_playing.set_string(my_packet_head, set_byte_array.constData());
+                qDebug() << "replyAssertPlanePos";
                 replyAssertPlanePos();//收到了断言位置包
+                qDebug() << "replyAssertPlanePos 2";
                 current_read_state = READ_PACKET_HEAD;
                 current_byte_num_to_read = kPacketHeadLen;
                 break;
