@@ -121,6 +121,8 @@ public:
 
     void setPlane(int row, int column);
 
+    void setOppoPlane(int row, int column);
+
 
     void setConfigImpl(int fontsize, int color);
 
@@ -326,6 +328,7 @@ private:
     bool pre_not_valid_oppo;
     unsigned short my_plane_loc[PLANE_NUM][2];
     int my_plane_cnt;
+    int oppo_plane_cnt;
 
     int cur_oppo_row;
     int cur_oppo_column;

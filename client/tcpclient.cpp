@@ -846,7 +846,7 @@ void TcpClient::InitGameWindow(){
       }
       for(int i = 0;i < BOARD_SIZE; ++i) {
           for(int j = 0;j < BOARD_SIZE; ++j) {
-                my_board->setItem(i,j, new QTableWidgetItem);
+                oppo_board->setItem(i,j, new QTableWidgetItem);
           }
       }
       oppo_board->setEditTriggers(QTableWidget::NoEditTriggers);
@@ -932,6 +932,7 @@ void TcpClient::InitGameWindow(){
       }
 
       my_plane_cnt = 0;
+      oppo_plane_cnt = 0;
 
       gameWindow->show();
 }
@@ -1165,6 +1166,230 @@ void TcpClient::setPlane(int row, int column){
     }
 }
 
+void TcpClient::setOppoPlane(int row, int column){
+        cur_oppo_row = row;
+        cur_oppo_column = column;
+        auto random_color = PLANE_COLOR[oppo_plane_cnt];
+        // head
+        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(random_color);
+        guess_board[cur_oppo_row][cur_oppo_column] = 1;
+
+
+        int temp_board[BOARD_SIZE][BOARD_SIZE];
+        for(int i = 0; i < BOARD_SIZE; ++i) {
+            for(int j = 0; j < BOARD_SIZE; ++j){
+                temp_board[i][j] = 0;
+            }
+        }
+
+        // 上
+        if(direction_index == 0) {
+            // 位置合法
+            if(cur_oppo_column - 2 >= 0 && cur_oppo_column + 2 <= 9 && cur_oppo_row + 3 <= 9) {
+                temp_board[cur_oppo_row+1][cur_oppo_column-2] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column+1] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column+2] = 1;
+                temp_board[cur_oppo_row+2][cur_oppo_column] = 1;
+                temp_board[cur_oppo_row+3][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row+3][cur_oppo_column] = 1;
+                temp_board[cur_oppo_row+3][cur_oppo_column+1] = 1;
+
+                int sum = 0;
+                for(int i = 0; i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += guess_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column-2)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column+2)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+2, cur_oppo_column)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+3, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+3, cur_oppo_column)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+3, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row+1][cur_oppo_column-2] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column+1] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column+2] = 1;
+                    guess_board[cur_oppo_row+2][cur_oppo_column] = 1;
+                    guess_board[cur_oppo_row+3][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row+3][cur_oppo_column] = 1;
+                    guess_board[cur_oppo_row+3][cur_oppo_column+1] = 1;
+                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    my_plane_loc[oppo_plane_cnt][1] = (cur_oppo_row + 3) * BOARD_SIZE + cur_oppo_column;
+                    oppo_plane_cnt += 1;
+                }else{
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+                }
+            } else {
+                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+            }
+        } else if(direction_index == 1) { // 下
+            if(cur_oppo_column - 2 >= 0 && cur_oppo_column + 2 <= 9 && cur_oppo_row - 3 >= 0) {
+                temp_board[cur_oppo_row-1][cur_oppo_column-2] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column+1] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column+2] = 1;
+                temp_board[cur_oppo_row-2][cur_oppo_column] = 1;
+                temp_board[cur_oppo_row-3][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row-3][cur_oppo_column] = 1;
+                temp_board[cur_oppo_row-3][cur_oppo_column+1] = 1;
+
+                int sum = 0;
+                for(int i = 0;i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += guess_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column-2)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column+2)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-2, cur_oppo_column)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-3, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-3, cur_oppo_column)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-3, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row-1][cur_oppo_column-2] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column+1] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column+2] = 1;
+                    guess_board[cur_oppo_row-2][cur_oppo_column] = 1;
+                    guess_board[cur_oppo_row-3][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row-3][cur_oppo_column] = 1;
+                    guess_board[cur_oppo_row-3][cur_oppo_column+1] = 1;
+                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    my_plane_loc[oppo_plane_cnt][1] = (cur_oppo_row - 3) * BOARD_SIZE + cur_oppo_column;
+                    oppo_plane_cnt += 1;
+                } else{
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+                }
+            } else {
+                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+            }
+        } else if(direction_index == 2) { // 左
+            if(cur_oppo_column + 3 <= 9 && cur_oppo_row - 2 >= 0 && cur_oppo_row + 2 <= 9) {
+                temp_board[cur_oppo_row+2][cur_oppo_column+1] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column+1] = 1;
+                temp_board[cur_oppo_row][cur_oppo_column+1] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column+1] = 1;
+                temp_board[cur_oppo_row-2][cur_oppo_column+1] = 1;
+                temp_board[cur_oppo_row][cur_oppo_column+2] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column+3] = 1;
+                temp_board[cur_oppo_row][cur_oppo_column+3] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column+3] = 1;
+
+                int sum = 0;
+                for(int i = 0;i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += guess_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    oppo_board->item(cur_oppo_row+2, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-2, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row, cur_oppo_column+2)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column+3)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row, cur_oppo_column+3)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column+3)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row+2][cur_oppo_column+1] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column+1] = 1;
+                    guess_board[cur_oppo_row][cur_oppo_column+1] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column+1] = 1;
+                    guess_board[cur_oppo_row-2][cur_oppo_column+1] = 1;
+                    guess_board[cur_oppo_row][cur_oppo_column+2] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column+3] = 1;
+                    guess_board[cur_oppo_row][cur_oppo_column+3] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column+3] = 1;
+                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    my_plane_loc[oppo_plane_cnt][1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column + 3);
+                    oppo_plane_cnt += 1;
+                } else{
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+                }
+            } else {
+                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+            }
+        } else if(direction_index == 3) { // 右
+            if(cur_oppo_column - 3 >= 0 && cur_oppo_row - 2 >= 0 && cur_oppo_row + 2 <= 9) {
+                temp_board[cur_oppo_row+2][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row-2][cur_oppo_column-1] = 1;
+                temp_board[cur_oppo_row][cur_oppo_column-2] = 1;
+                temp_board[cur_oppo_row-1][cur_oppo_column-3] = 1;
+                temp_board[cur_oppo_row][cur_oppo_column-3] = 1;
+                temp_board[cur_oppo_row+1][cur_oppo_column-3] = 1;
+
+                int sum = 0;
+                for(int i = 0;i < BOARD_SIZE; ++i){
+                    for(int j = 0;j < BOARD_SIZE; ++j){
+                        sum += guess_board[i][j] & temp_board[i][j];
+                    }
+                }
+
+                if(!sum){
+                    oppo_board->item(cur_oppo_row+2, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-2, cur_oppo_column-1)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row, cur_oppo_column-2)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row-1, cur_oppo_column-3)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row, cur_oppo_column-3)->setBackgroundColor(random_color);
+                    oppo_board->item(cur_oppo_row+1, cur_oppo_column-3)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row+2][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row-2][cur_oppo_column-1] = 1;
+                    guess_board[cur_oppo_row][cur_oppo_column-2] = 1;
+                    guess_board[cur_oppo_row-1][cur_oppo_column-3] = 1;
+                    guess_board[cur_oppo_row][cur_oppo_column-3] = 1;
+                    guess_board[cur_oppo_row+1][cur_oppo_column-3] = 1;
+                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    my_plane_loc[oppo_plane_cnt][1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column - 3);
+                    oppo_plane_cnt += 1;
+                } else {
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+                }
+            } else {
+                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(original_color);
+                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+            }
+        }
+
+        cur_oppo_row = -1;
+        cur_oppo_column = -1;
+
+        // 摆放结束
+        if(oppo_plane_cnt == 3){
+            // TODO
+        }
+}
 
 void TcpClient::previewPlane(int row, int column){
     qDebug() << "i am here\n" << row << " " << column;
@@ -2360,14 +2585,13 @@ void TcpClient::offensive()
 {
     /*GUI部分，将状态转为先手，然后恢复oppoBoard棋盘（取消冻结）*/
     oppo_board->setEnabled(true);
-    errorGUI("您是先手");
+    errorGUI("your turn");
 }
 
 void TcpClient::defensive()
 {
     /*GUI部分，将状态转为后手，然后冻结oppoBoard棋盘*/
     oppo_board->setEnabled(false);
-    errorGUI("您是后手");
 }
 
 //TODO
@@ -2375,6 +2599,9 @@ void TcpClient::defensive()
 void TcpClient::gameReady()
 {
     //GUI部分，摆放好了以后，首先先要判断三个位置是否合法，如果不合法要提示错误
+    // 需要disable完成摆放
+    auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(0)->widget());
+    button->setEnabled(false);
 
     //GUI部分，三个位置坐标, 装在下面的数组里
 
@@ -2411,6 +2638,11 @@ void TcpClient::gameStart(bool isOffensive)
 {
     //GUI部分，接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
     qDebug() << "进入gameStart\n";
+    if(isOffensive) {
+        errorGUI("您是先手");
+    } else {
+        errorGUI("您是后手");
+    }
 
 }
 
@@ -2478,8 +2710,16 @@ void TcpClient::replyPointState()
 void TcpClient::recvReplyPointState(const unsigned short res)
 {
     //GUI部分，oppoBoard显示自己猜测的结果
+//    static const unsigned short kExtendReplyPreNo=0x00; // 猜测未命中
+//    static const unsigned short kExtendReplyPreHurt=0x01; // 猜测伤飞机
+//    static const unsigned short kExtendReplyPreDestroy=0x02; // 猜测毁飞机
+    if(res == PacketHead::kExtendReplyPreNo){
 
+    } else if(res == PacketHead::kExtendReplyPreHurt) {
 
+    } else if(res == PacketHead::kExtendReplyPreDestroy){
+
+    }
 }
 
 //TODO
@@ -2992,6 +3232,10 @@ void TcpClient::oppo_board_clicked(int row, int column) {
 
     auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(2)->widget());
     button->setEnabled(true);
+
+    if(!isGuess){
+        setOppoPlane(row, column);
+    }
 }
 
 void TcpClient::oppo_board_entered(int row, int column) {
