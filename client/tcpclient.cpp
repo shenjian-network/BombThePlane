@@ -2246,12 +2246,12 @@ void TcpClient::inGame()
     }
     else
     {   
-        //TODO
-        //GUI部分，显示player1和player2的游戏状态，冻结邀请按钮（注意其中一人是自己的特殊情况）
-        if(player_one_name != username)
-            setUserStatus(player_one_name, true, false);
-        if(player_two_name != username)
-            setUserStatus(player_two_name, true, false);
+//        //TODO
+//        //GUI部分，显示player1和player2的游戏状态，冻结邀请按钮（注意其中一人是自己的特殊情况）
+//        if(player_one_name != username)
+//            setUserStatus(player_one_name, true, false);
+//        if(player_two_name != username)
+//            setUserStatus(player_two_name, true, false);
     }
 }
 
@@ -2264,12 +2264,12 @@ void TcpClient::offGame()
     QString player_one_name = my_extend_packet_status.get_player_one_name();
     QString player_two_name = my_extend_packet_status.get_player_two_name();
 
-    //TODO
-    /*GUI部分，恢复两个人的邀请按钮, 注意特判其中一个人是自己的情况*/
-    if(player_one_name != username)
-        setUserStatus(player_one_name, true, false);
-    if(player_two_name != username)
-        setUserStatus(player_one_name, true, false);
+//    //TODO
+//    /*GUI部分，恢复两个人的邀请按钮, 注意特判其中一个人是自己的情况*/
+//    if(player_one_name != username)
+//        setUserStatus(player_one_name, true, false);
+//    if(player_two_name != username)
+//        setUserStatus(player_two_name, true, false);
 }
 
 //这是一个槽函数, 绑定的是邀请按钮
@@ -2773,6 +2773,7 @@ void TcpClient::assertPlanePos()
     loc_small = guess_loc[0];
     loc_big = guess_loc[1];
 
+    qDebug() << "assertPlanePos";
 
     //发送断言包
     PacketHead sendPacketHead;
@@ -2951,6 +2952,7 @@ void TcpClient::replyAssertPlanePos()
     
     if(isWinner)//对方胜利了，发送胜利包
     {
+        qDebug() << "GameOver";
         sendPacketHead.set_packet_type(PacketHead::kExtendGameOver);
         sendPacketHead.set_function_type(PacketHead::kExtendGameOverReply);
         sendPacketHead.set_length(0);
@@ -2981,8 +2983,8 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
         errorGUI("断言成功!");
     } else if(res == 4){
         // 需要去掉
-        int row = static_cast<int>(guess_loc[0]);
-        int column = static_cast<int>(guess_loc[0]);
+        int row = static_cast<int>(guess_loc[0] / BOARD_SIZE);
+        int column = static_cast<int>(guess_loc[0] % BOARD_SIZE);
         if(direction_index == 0) {
                             oppo_board->item(row+1, column-2)->setBackgroundColor(original_color);
                             oppo_board->item(row+1, column-1)->setBackgroundColor(original_color);
