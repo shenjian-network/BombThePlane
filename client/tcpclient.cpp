@@ -2961,6 +2961,8 @@ void TcpClient::replyAssertPlanePos()
         socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
         delete[] tmpStr;
+
+        gameOver(false);
     }
 
     offensive();
