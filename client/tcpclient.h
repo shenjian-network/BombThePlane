@@ -150,7 +150,7 @@ public:
 
     void defensive();
 
-    void gameReady();
+
 
     void gameStart();
 
@@ -219,6 +219,8 @@ private slots:
     void declineInvitation();
 
     void cancelInvitationActive();
+
+    void gameReady();
 
     // board
     void direction_on_changed(int);

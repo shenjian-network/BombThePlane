@@ -909,22 +909,27 @@ void TcpClient::setPlane(int row, int column){
     qDebug() << "我进来了呀\n";
     cur_row = row;
     cur_column = column;
+    auto random_color = QColor::fromHsl(rand()%360,rand()%256,rand()%200);
     // head
-    my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
+    my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
     valid_board[cur_row][cur_column] = 1;
+
+
+
+
     // 上
     if(direction_index == 0) {
         // 位置合法
         if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row + 3 <= 9) {
-            my_board->item(cur_row+1, cur_column-2)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column+2)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+2, cur_column)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+3, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+3, cur_column)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+3, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+1, cur_column-2)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column+2)->setBackgroundColor(random_color);
+            my_board->item(cur_row+2, cur_column)->setBackgroundColor(random_color);
+            my_board->item(cur_row+3, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row+3, cur_column)->setBackgroundColor(random_color);
+            my_board->item(cur_row+3, cur_column+1)->setBackgroundColor(random_color);
             valid_board[cur_row+1][cur_column-2] = 1;
             valid_board[cur_row+1][cur_column-1] = 1;
             valid_board[cur_row+1][cur_column] = 1;
@@ -943,15 +948,15 @@ void TcpClient::setPlane(int row, int column){
         }
     } else if(direction_index == 1) { // 下
         if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row - 3 >= 0) {
-            my_board->item(cur_row-1, cur_column-2)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column+2)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-2, cur_column)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-3, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-3, cur_column)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-3, cur_column+1)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row-1, cur_column-2)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column+2)->setBackgroundColor(random_color);
+            my_board->item(cur_row-2, cur_column)->setBackgroundColor(random_color);
+            my_board->item(cur_row-3, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row-3, cur_column)->setBackgroundColor(random_color);
+            my_board->item(cur_row-3, cur_column+1)->setBackgroundColor(random_color);
             valid_board[cur_row-1][cur_column-2] = 1;
             valid_board[cur_row-1][cur_column-1] = 1;
             valid_board[cur_row-1][cur_column] = 1;
@@ -970,15 +975,15 @@ void TcpClient::setPlane(int row, int column){
         }
     } else if(direction_index == 2) { // 左
         if(cur_column + 3 <= 9 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
-            my_board->item(cur_row+2, cur_column+1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row, cur_column+1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-2, cur_column+1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row, cur_column+2)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column+3)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row, cur_column+3)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column+3)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+2, cur_column+1)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(random_color);
+            my_board->item(cur_row, cur_column+1)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column+1)->setBackgroundColor(random_color);
+            my_board->item(cur_row-2, cur_column+1)->setBackgroundColor(random_color);
+            my_board->item(cur_row, cur_column+2)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column+3)->setBackgroundColor(random_color);
+            my_board->item(cur_row, cur_column+3)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column+3)->setBackgroundColor(random_color);
             valid_board[cur_row+2][cur_column+1] = 1;
             valid_board[cur_row+1][cur_column+1] = 1;
             valid_board[cur_row][cur_column+1] = 1;
@@ -997,15 +1002,15 @@ void TcpClient::setPlane(int row, int column){
         }
     } else if(direction_index == 3) { // 右
         if(cur_column - 3 >= 0 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
-            my_board->item(cur_row+2, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-2, cur_column-1)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row, cur_column-2)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row-1, cur_column-3)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row, cur_column-3)->setBackgroundColor(QColor("gray"));
-            my_board->item(cur_row+1, cur_column-3)->setBackgroundColor(QColor("gray"));
+            my_board->item(cur_row+2, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row-2, cur_column-1)->setBackgroundColor(random_color);
+            my_board->item(cur_row, cur_column-2)->setBackgroundColor(random_color);
+            my_board->item(cur_row-1, cur_column-3)->setBackgroundColor(random_color);
+            my_board->item(cur_row, cur_column-3)->setBackgroundColor(random_color);
+            my_board->item(cur_row+1, cur_column-3)->setBackgroundColor(random_color);
             valid_board[cur_row+2][cur_column-1] = 1;
             valid_board[cur_row+1][cur_column-1] = 1;
             valid_board[cur_row][cur_column-1] = 1;
@@ -1031,6 +1036,8 @@ void TcpClient::setPlane(int row, int column){
     if(my_plane_cnt == 3){
         auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(0)->widget());
         button->setEnabled(true);
+        my_board->setCurrentCell(-1,-1);
+        my_board->setEnabled(false);
     }
 }
 
@@ -2020,6 +2027,7 @@ void TcpClient::gameReady()
         loc_small[i] = my_plane_loc[i][0];
         loc_big[i] = my_plane_loc[i][1];
     }
+    qDebug() << "进入gaemReady\n";
 
 
     //如果合法，发送gameReady包
@@ -2043,7 +2051,7 @@ void TcpClient::gameReady()
 void TcpClient::gameStart()
 {
     //GUI部分，接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
-
+    qDebug() << "进入gameStart\n";
 }
 
 
