@@ -933,6 +933,7 @@ void TcpClient::InitGameWindow(){
 
       my_plane_cnt = 0;
       oppo_plane_cnt = 0;
+      guess_right_cnt = 0;
 
       gameWindow->show();
 }
@@ -1230,8 +1231,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_board[cur_oppo_row+3][cur_oppo_column-1] = 1;
                     guess_board[cur_oppo_row+3][cur_oppo_column] = 1;
                     guess_board[cur_oppo_row+3][cur_oppo_column+1] = 1;
-                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
-                    my_plane_loc[oppo_plane_cnt][1] = (cur_oppo_row + 3) * BOARD_SIZE + cur_oppo_column;
+                    guess_loc[0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    guess_loc[1] = (cur_oppo_row + 3) * BOARD_SIZE + cur_oppo_column;
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 }else{
@@ -1280,8 +1281,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_board[cur_oppo_row-3][cur_oppo_column-1] = 1;
                     guess_board[cur_oppo_row-3][cur_oppo_column] = 1;
                     guess_board[cur_oppo_row-3][cur_oppo_column+1] = 1;
-                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
-                    my_plane_loc[oppo_plane_cnt][1] = (cur_oppo_row - 3) * BOARD_SIZE + cur_oppo_column;
+                    guess_loc[0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    guess_loc[1] = (cur_oppo_row - 3) * BOARD_SIZE + cur_oppo_column;
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 } else{
@@ -1330,8 +1331,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_board[cur_oppo_row-1][cur_oppo_column+3] = 1;
                     guess_board[cur_oppo_row][cur_oppo_column+3] = 1;
                     guess_board[cur_oppo_row+1][cur_oppo_column+3] = 1;
-                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
-                    my_plane_loc[oppo_plane_cnt][1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column + 3);
+                    guess_loc[0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    guess_loc[1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column + 3);
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 } else{
@@ -1380,8 +1381,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_board[cur_oppo_row-1][cur_oppo_column-3] = 1;
                     guess_board[cur_oppo_row][cur_oppo_column-3] = 1;
                     guess_board[cur_oppo_row+1][cur_oppo_column-3] = 1;
-                    my_plane_loc[oppo_plane_cnt][0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
-                    my_plane_loc[oppo_plane_cnt][1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column - 3);
+                    guess_loc[0] = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+                    guess_loc[1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column - 3);
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 } else {
@@ -1397,10 +1398,6 @@ void TcpClient::setOppoPlane(int row, int column){
         cur_oppo_row = -1;
         cur_oppo_column = -1;
         oppo_board->setCurrentCell(cur_oppo_row, cur_oppo_column);
-
-
-
-
 }
 
 void TcpClient::previewPlane(int row, int column){
@@ -2672,6 +2669,7 @@ void TcpClient::askForPointState()
     unsigned short loc_small;
     unsigned short loc_big = 0;
     loc_small = cur_oppo_row * BOARD_SIZE + cur_oppo_column;
+    guess_loc[0] = loc_small;
     qDebug() << "猜测的坐标是:" << loc_small;
 
 
@@ -2742,8 +2740,8 @@ void TcpClient::recvReplyPointState(const unsigned short res)
 //    static const unsigned short kExtendReplyPreNo=0x00; // 猜测未命中
 //    static const unsigned short kExtendReplyPreHurt=0x01; // 猜测伤飞机
 //    static const unsigned short kExtendReplyPreDestroy=0x02; // 猜测毁飞机
-    int row = static_cast<int>(res / BOARD_SIZE);
-    int column = static_cast<int>(res % BOARD_SIZE);
+    int row = static_cast<int>(guess_loc[0] / BOARD_SIZE);
+    int column = static_cast<int>(guess_loc[0] % BOARD_SIZE);
     if(res == PacketHead::kExtendReplyPreNo){
         oppo_board->item(row, column)->setText("O");
         QFont ft;
@@ -2772,6 +2770,8 @@ void TcpClient::assertPlanePos()
     //GUI部分，获取飞机的位置
     unsigned short loc_small;
     unsigned short loc_big;
+    loc_small = guess_loc[0];
+    loc_big = guess_loc[1];
 
 
     //发送断言包
@@ -2801,11 +2801,130 @@ void TcpClient::replyAssertPlanePos()
     unsigned short loc_big = my_extend_packet_playing.get_loc_big();
     //GUI部分，显示对方的断言位置和结果
 
-    unsigned short assertRes;
+
+    unsigned short assertRes = 4;
     /*
     static const unsigned short kExtendReplyPreFail=0x03; // 断言未中
     static const unsigned short kExtendReplyPreSuccess=0x04; // 断言命中
     */
+    for(int i = 0;i < 3; ++i){
+        if(my_plane_loc[i][0] == loc_small && my_plane_loc[i][1] == loc_big){
+            assertRes = 3;
+            break;
+        }
+    }
+
+    // 命中
+    int direction_index;
+    int row = static_cast<int>(loc_small / BOARD_SIZE);
+    int column = static_cast<int>(loc_small % BOARD_SIZE);
+    if(assertRes == 3){
+        guess_right_cnt += 1;
+        // 上 左
+        if(loc_big > loc_small) {
+            if(loc_small % BOARD_SIZE == loc_big % BOARD_SIZE){
+                direction_index = 0;
+            } else {
+                direction_index = 2;
+            }
+        } else {
+            if(loc_small % BOARD_SIZE == loc_big % BOARD_SIZE){
+                direction_index = 1;
+            } else {
+                direction_index = 3;
+            }
+        }
+
+        valid_board[row][column] = 0;
+        if(direction_index == 0) {
+                            my_board->item(row+1, column-2)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column+2)->setBackgroundColor(original_color);
+                            my_board->item(row+2, column)->setBackgroundColor(original_color);
+                            my_board->item(row+3, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row+3, column)->setBackgroundColor(original_color);
+                            my_board->item(row+3, column+1)->setBackgroundColor(original_color);
+                            valid_board[row+1][column-2] = 0;
+                            valid_board[row+1][column-1] = 0;
+                            valid_board[row+1][column] = 0;
+                            valid_board[row+1][column+1] = 0;
+                            valid_board[row+1][column+2] = 0;
+                            valid_board[row+2][column] = 0;
+                            valid_board[row+3][column-1] = 0;
+                            valid_board[row+3][column] = 0;
+                            valid_board[row+3][column+1] = 0;
+
+                } else if(direction_index == 1) { // 下
+
+                            my_board->item(row-1, column-2)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column+2)->setBackgroundColor(original_color);
+                            my_board->item(row-2, column)->setBackgroundColor(original_color);
+                            my_board->item(row-3, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row-3, column)->setBackgroundColor(original_color);
+                            my_board->item(row-3, column+1)->setBackgroundColor(original_color);
+                            valid_board[row-1][column-2] = 0;
+                            valid_board[row-1][column-1] = 0;
+                            valid_board[row-1][column] = 0;
+                            valid_board[row-1][column+1] = 0;
+                            valid_board[row-1][column+2] = 0;
+                            valid_board[row-2][column] = 0;
+                            valid_board[row-3][column-1] = 0;
+                            valid_board[row-3][column] = 0;
+                            valid_board[row-3][column+1] = 0;
+
+
+
+                } else if(direction_index == 2) { // 左
+
+                            my_board->item(row+2, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row-2, column+1)->setBackgroundColor(original_color);
+                            my_board->item(row, column+2)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column+3)->setBackgroundColor(original_color);
+                            my_board->item(row, column+3)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column+3)->setBackgroundColor(original_color);
+                            valid_board[row+2][column+1] = 0;
+                            valid_board[row+1][column+1] = 0;
+                            valid_board[row][column+1] = 0;
+                            valid_board[row-1][column+1] = 0;
+                            valid_board[row-2][column+1] = 0;
+                            valid_board[row][column+2] = 0;
+                            valid_board[row-1][column+3] = 0;
+                            valid_board[row][column+3] = 0;
+                            valid_board[row+1][column+3] = 0;
+
+
+                } else if(direction_index == 3) { // 右
+
+                            my_board->item(row+2, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row-2, column-1)->setBackgroundColor(original_color);
+                            my_board->item(row, column-2)->setBackgroundColor(original_color);
+                            my_board->item(row-1, column-3)->setBackgroundColor(original_color);
+                            my_board->item(row, column-3)->setBackgroundColor(original_color);
+                            my_board->item(row+1, column-3)->setBackgroundColor(original_color);
+                            valid_board[row+2][column-1] = 0;
+                            valid_board[row+1][column-1] = 0;
+                            valid_board[row][column-1] = 0;
+                            valid_board[row-1][column-1] = 0;
+                            valid_board[row-2][column-1] = 0;
+                            valid_board[row][column-2] = 0;
+                            valid_board[row-1][column-3] = 0;
+                            valid_board[row][column-3] = 0;
+                            valid_board[row+1][column-3] = 0;
+
+                }
+
+    }
 
     //判断是否猜中并发送回复断言包
     PacketHead sendPacketHead;
@@ -2823,6 +2942,9 @@ void TcpClient::replyAssertPlanePos()
 
     bool isWinner = false;
     //TODO,判断对方是否猜中了三次
+    if(guess_right_cnt == 3){
+        isWinner = true;
+    }
 
     
     if(isWinner)//对方胜利了，发送胜利包
@@ -2850,6 +2972,103 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
     static const unsigned short kExtendReplyPreFail=0x03; // 断言未中
     static const unsigned short kExtendReplyPreSuccess=0x04; // 断言命中
     */
+    if(res == 3){
+        // do nothing
+        errorGUI("断言成功!");
+    } else if(res == 4){
+        // 需要去掉
+        int row = static_cast<int>(guess_loc[0]);
+        int column = static_cast<int>(guess_loc[0]);
+        if(direction_index == 0) {
+                            oppo_board->item(row+1, column-2)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column+1)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column+2)->setBackgroundColor(original_color);
+                            oppo_board->item(row+2, column)->setBackgroundColor(original_color);
+                            oppo_board->item(row+3, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row+3, column)->setBackgroundColor(original_color);
+                            oppo_board->item(row+3, column+1)->setBackgroundColor(original_color);
+                            guess_board[row+1][column-2] = 0;
+                            guess_board[row+1][column-1] = 0;
+                            guess_board[row+1][column] = 0;
+                            guess_board[row+1][column+1] = 0;
+                            guess_board[row+1][column+2] = 0;
+                            guess_board[row+2][column] = 0;
+                            guess_board[row+3][column-1] = 0;
+                            guess_board[row+3][column] = 0;
+                            guess_board[row+3][column+1] = 0;
+
+                } else if(direction_index == 1) { // 下
+
+                            oppo_board->item(row-1, column-2)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column+1)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column+2)->setBackgroundColor(original_color);
+                            oppo_board->item(row-2, column)->setBackgroundColor(original_color);
+                            oppo_board->item(row-3, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row-3, column)->setBackgroundColor(original_color);
+                            oppo_board->item(row-3, column+1)->setBackgroundColor(original_color);
+                            guess_board[row-1][column-2] = 0;
+                            guess_board[row-1][column-1] = 0;
+                            guess_board[row-1][column] = 0;
+                            guess_board[row-1][column+1] = 0;
+                            guess_board[row-1][column+2] = 0;
+                            guess_board[row-2][column] = 0;
+                            guess_board[row-3][column-1] = 0;
+                            guess_board[row-3][column] = 0;
+                            guess_board[row-3][column+1] = 0;
+
+
+
+                } else if(direction_index == 2) { // 左
+
+                            oppo_board->item(row+2, column+1)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column+1)->setBackgroundColor(original_color);
+                            oppo_board->item(row, column+1)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column+1)->setBackgroundColor(original_color);
+                            oppo_board->item(row-2, column+1)->setBackgroundColor(original_color);
+                            oppo_board->item(row, column+2)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column+3)->setBackgroundColor(original_color);
+                            oppo_board->item(row, column+3)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column+3)->setBackgroundColor(original_color);
+                            guess_board[row+2][column+1] = 0;
+                            guess_board[row+1][column+1] = 0;
+                            guess_board[row][column+1] = 0;
+                            guess_board[row-1][column+1] = 0;
+                            guess_board[row-2][column+1] = 0;
+                            guess_board[row][column+2] = 0;
+                            guess_board[row-1][column+3] = 0;
+                            guess_board[row][column+3] = 0;
+                            guess_board[row+1][column+3] = 0;
+
+
+                } else if(direction_index == 3) { // 右
+
+                            oppo_board->item(row+2, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row-2, column-1)->setBackgroundColor(original_color);
+                            oppo_board->item(row, column-2)->setBackgroundColor(original_color);
+                            oppo_board->item(row-1, column-3)->setBackgroundColor(original_color);
+                            oppo_board->item(row, column-3)->setBackgroundColor(original_color);
+                            oppo_board->item(row+1, column-3)->setBackgroundColor(original_color);
+                            guess_board[row+2][column-1] = 0;
+                            guess_board[row+1][column-1] = 0;
+                            guess_board[row][column-1] = 0;
+                            guess_board[row-1][column-1] = 0;
+                            guess_board[row-2][column-1] = 0;
+                            guess_board[row][column-2] = 0;
+                            guess_board[row-1][column-3] = 0;
+                            guess_board[row][column-3] = 0;
+                            guess_board[row+1][column-3] = 0;
+
+                }
+
+        errorGUI("断言错误!");
+    }
 }
 
 //TODO
@@ -2861,11 +3080,11 @@ void TcpClient::gameOver(bool isWinner)
     */
     if(isWinner)
     {
-
+        errorGUI("您赢了");
     }
     else
     {
-
+        errorGUI("您输了");
     }
 }
 

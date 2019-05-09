@@ -334,6 +334,9 @@ private:
     int cur_oppo_column;
 
     bool isGuess;
+    int guess_loc[2];
+
+    int guess_right_cnt;
 };
 
 #endif // TCPCLIENT_H
