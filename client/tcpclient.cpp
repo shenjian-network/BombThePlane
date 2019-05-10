@@ -826,7 +826,9 @@ void TcpClient::InitGameWindow(){
 
       for(int i = 0;i < BOARD_SIZE; ++i) {
           for(int j = 0;j < BOARD_SIZE; ++j) {
-                my_board->setItem(i,j, new QTableWidgetItem);
+                auto item = new QTableWidgetItem;
+                item->setBackgroundColor("black");
+                my_board->setItem(i,j, item);
           }
       }
       my_board->setMouseTracking(true);
@@ -850,7 +852,9 @@ void TcpClient::InitGameWindow(){
       }
       for(int i = 0;i < BOARD_SIZE; ++i) {
           for(int j = 0;j < BOARD_SIZE; ++j) {
-                oppo_board->setItem(i,j, new QTableWidgetItem);
+                auto item = new QTableWidgetItem;
+                item->setBackgroundColor("black");
+                oppo_board->setItem(i,j, item);
           }
       }
       oppo_board->setEditTriggers(QTableWidget::NoEditTriggers);
@@ -2986,13 +2990,12 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
     */
     if(res == 3){
         // do nothing
-        qDebug() << "断言成功前";
         errorGUI("断言成功!");
-        qDebug() << "断言成功后";
     } else if(res == 4){
         // 需要去掉
         int row = static_cast<int>(guess_loc[0] / BOARD_SIZE);
         int column = static_cast<int>(guess_loc[0] % BOARD_SIZE);
+        oppo_board->item(row, column)->setBackgroundColor(original_color);
         if(direction_index == 0) {
                             oppo_board->item(row+1, column-2)->setBackgroundColor(original_color);
                             oppo_board->item(row+1, column-1)->setBackgroundColor(original_color);
@@ -3080,9 +3083,8 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
                             guess_board[row+1][column-3] = 0;
 
                 }
-        qDebug() << "断言错误前";
         errorGUI("断言错误!");
-        qDebug() << "断言错误后";
+        oppo_plane_cnt -= 1;
     }
 }
 
