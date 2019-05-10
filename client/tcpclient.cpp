@@ -308,7 +308,7 @@ void TcpClient::chatRoomGUI(){
     // 左栏，包括登录信息、用户列表
     QVBoxLayout * leftLayout = new QVBoxLayout;
 
-    QPushButton * config = new QPushButton("设置");
+    QPushButton * config = new QPushButton("帮助");
     config->setStyleSheet("QPushButton{background: rgb(46, 50, 56); color: white;}");
     leftLayout->addWidget(config);
 
@@ -441,47 +441,24 @@ std::string stringPadding(std::string myString, const unsigned int & len)
 
 // 配置界面 （FINISHED）
 //下面有个确定键，点击后，会更改GUI界面，并触发槽函数sendConfig
+// 现在改为了显示帮助
 void TcpClient::configGUI(){
     configWindow = new QWidget;
     configWindow->setFixedSize(500, 300);
 
-    QVBoxLayout * layout = new QVBoxLayout;
+    auto layout = new QVBoxLayout;
+    auto help = new QTextBrowser;
+    help->setText("+ means a hit on the head\n X means a hit\n O means a miss\n Enjoy yourself!\n");
+    QFont ft;
+    ft.setPointSize(25);
+//    ft.setFamily("Segoe Script");
+    ft.setItalic(true);
+    help->setFont(ft);
+    help->setTextColor(QColor("orange"));
+    help->setFontFamily("Segoe Script");
+    layout->addWidget(help);
 
-    QHBoxLayout * sublayout1 = new QHBoxLayout;
-    QLabel * label1 = new QLabel("回看数");
-    QLineEdit * value1 = new QLineEdit;
-    value1->setValidator(new QIntValidator(100, 200, this));
-    sublayout1->addWidget(label1);
-    sublayout1->addWidget(value1);
-
-    QHBoxLayout * sublayout2 = new QHBoxLayout;
-    QLabel * label2 = new QLabel("字体大小");
-    QLineEdit * value2 = new QLineEdit;
-    value2->setValidator(new QIntValidator(4, 24, this));
-    sublayout2->addWidget(label2);
-    sublayout2->addWidget(value2);
-
-
-    QHBoxLayout * sublayout3 = new QHBoxLayout;
-    QLabel * label3 = new QLabel("字体颜色");
-    QLineEdit * value3 = new QLineEdit;
-    value3->setValidator(new QIntValidator(0, 7, this));
-    sublayout3->addWidget(label3);
-    sublayout3->addWidget(value3);
-
-
-    QHBoxLayout * sublayout4 = new QHBoxLayout;
-    QPushButton * ack = new QPushButton("确定");
-    ack->setFixedSize(75, 30);
-    sublayout4->addWidget(ack);
-
-    layout->addLayout(sublayout1);
-    layout->addLayout(sublayout2);
-    layout->addLayout(sublayout3);
-    layout->addLayout(sublayout4);
     configWindow->setLayout(layout);
-
-    connect(ack, SIGNAL(clicked()), this, SLOT(sendConfig()), Qt::QueuedConnection);
     configWindow->show();
 }
 
