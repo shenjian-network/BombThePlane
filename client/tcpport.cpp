@@ -3,6 +3,8 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QRegExp>
+#include <QRegExpValidator>
 
 TcpPort::TcpPort(QWidget* parent)
 {
@@ -10,7 +12,15 @@ TcpPort::TcpPort(QWidget* parent)
     tcp_port->setFixedSize(200, 100);
     auto layout = new QHBoxLayout;
     auto label = new QLabel("端口");
+
+    QRegExp rx("^\d+$");
+    auto pReg = new QRegExpValidator(rx, this);
+
+
     auto port_edit = new QLineEdit();
+    port_edit->setText("20054");
+    port_edit->setValidator(pReg);
+
     auto button = new QPushButton("确定");
     layout->addWidget(label);
     layout->addWidget(port_edit);
