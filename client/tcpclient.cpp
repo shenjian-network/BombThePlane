@@ -773,6 +773,7 @@ void TcpClient::InitGameWindow(){
       gameWindow = new QWidget;
       gameWindow->setFixedHeight(700);
       gameWindow->setMinimumWidth(1100);
+      gameWindow->setWindowFlags(gameWindow->windowFlags() & Qt::WindowFlags(~Qt::WindowCloseButtonHint));
 
       auto layout = new QVBoxLayout;
 
@@ -917,6 +918,7 @@ void TcpClient::InitGameWindow(){
       pre_not_valid = true;
       pre_not_valid_oppo = true;
       isGuess = true;
+      invitingName.clear();
 
       // 初始化
       for(int i = 0;i < BOARD_SIZE; ++i){
@@ -2275,6 +2277,7 @@ void TcpClient::inviteGame()
     /*
     GUI部分，获得对方用户名opponame
     */
+    qDebug() << "inviteGame 1";
     QObject * object = QObject::sender();
     QPushButton * button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
 
@@ -2293,6 +2296,7 @@ void TcpClient::inviteGame()
             sendDeclineInvitationPacket();
         }
     }
+    qDebug() << "inviteGame 2";
 
     invitingName.clear();
     //TODO
@@ -2303,6 +2307,7 @@ void TcpClient::inviteGame()
     }
     inviteDstBoxList.clear();
 
+    qDebug() << "inviteGame 3";
     if(findOpponame)
     {
         //由于你邀请的人也邀请了你，因此直接接受邀请
@@ -2337,6 +2342,7 @@ void TcpClient::inviteGame()
         //FINISH
         //GUI部分，隐藏主界面，并显示“正在邀请opponame", 要提供相应的选项
         inviteSrcGUI(opponame);
+        qDebug() << "inviteGame 4";
     }
 }
 
@@ -2371,6 +2377,7 @@ void TcpClient::showInvitation()
 //向对端发送同意邀请包（这时候server会向所有用户发送ingame包）
 void TcpClient::sendAcceptInvitationPacket()
 {
+    qDebug() << "sendAcceptInvitationPacket";
     PacketHead sendPacketHead;
 
     sendPacketHead.set_packet_type(PacketHead::kExtendBuildAndDestroy);
@@ -2522,6 +2529,8 @@ void TcpClient::cancelGameActive()
     socket->write(tmpStr, kPacketHeadLen + sendPacketHead.get_length());
 
     delete[] tmpStr;
+
+
 }
 
 //TODO
@@ -2607,6 +2616,7 @@ void TcpClient::defensive()
 /*点击摆放完成按钮触发*/
 void TcpClient::gameReady()
 {
+
     //GUI部分，摆放好了以后，首先先要判断三个位置是否合法，如果不合法要提示错误
     // 需要disable完成摆放
     auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(0)->widget());
@@ -2621,7 +2631,9 @@ void TcpClient::gameReady()
     for(int i = 0;i < loc_num; ++i) {
         loc_small[i] = my_plane_loc[i][0];
         loc_big[i] = my_plane_loc[i][1];
+        qDebug() << "i:" << loc_small[i] << " " << loc_big[i];
     }
+
     qDebug() << "进入gaemReady\n";
 
 
@@ -2645,6 +2657,7 @@ void TcpClient::gameReady()
 //TODO
 void TcpClient::gameStart(bool isOffensive)
 {
+    invitingName.clear();
     //GUI部分，接收到server发送的gameStart包，冻结或隐藏右侧的摆放栏，并提示游戏开始以及先后手，如果自己是后手，冻结棋盘
     qDebug() << "进入gameStart\n";
     if(isOffensive) {
