@@ -32,7 +32,8 @@ SOURCES += \
     ../common/server_to_client.cpp \
         main.cpp \
         tcpclient.cpp \
-    clickablelabel.cpp
+    clickablelabel.cpp \
+    tcpport.cpp
 
 HEADERS += \
     ../common/client_to_server.h \
@@ -40,7 +41,8 @@ HEADERS += \
     ../common/packet_head.h \
     ../common/server_to_client.h \
     clickablelabel.h \
-        tcpclient.h
+        tcpclient.h \
+    tcpport.h
 
 FORMS += \
         tcpclient.ui
