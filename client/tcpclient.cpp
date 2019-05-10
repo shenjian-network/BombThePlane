@@ -898,6 +898,10 @@ void TcpClient::InitGameWindow(){
       cancel_button->setEnabled(false);
       control_layout->addWidget(cancel_button);
 
+      auto exit_button = new QPushButton("退出游戏");
+      exit_button->setFixedSize(100, 20);
+      connect(exit_button, SIGNAL(clicked()), this, SLOT(cancelGameActive()));
+      control_layout->addWidget(exit_button);
 
 
       layout->setSpacing(0);
@@ -2497,6 +2501,7 @@ void TcpClient::cancelGameActive()
     回到主界面，恢复opponame的按钮
     */
     qDebug() << "cancle 成功" << "\n";
+    gameWindow->close();
 
     //向对端发送主动取消游戏包（这时候server会向所有用户发送offgame包）
     PacketHead sendPacketHead;
@@ -2528,6 +2533,8 @@ void TcpClient::cancelGamePassive()
     GUI部分，显示“对方退出了游戏”
     然后回到主界面，恢复opponame的按钮
     */
+    errorGUI("对方退出了游戏");
+    gameWindow->close();
 }
 
 //槽函数，主动取消邀请包
