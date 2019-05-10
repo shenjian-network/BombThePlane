@@ -11,9 +11,10 @@ int main(int argc, char *argv[])
     tcp_port.make_exec();
 
     int port = tcp_port.get_port();
+    QString ip = tcp_port.get_ip();
 
-
-    if(!w.ConnectToHost("10.60.102.252", port)){
+    qDebug() << ip;
+    if(!w.ConnectToHost(ip, port)){
         w.errorGUI("网络连接异常");
         return 0;
     }

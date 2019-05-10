@@ -12,6 +12,8 @@ public:
 
     int get_port();
 
+    QString get_ip();
+
     void make_exec();
 private slots:
     void on_btn_clicked();

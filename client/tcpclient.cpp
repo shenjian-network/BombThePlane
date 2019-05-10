@@ -2947,6 +2947,8 @@ void TcpClient::replyAssertPlanePos()
 
                 }
 
+    } else {
+        errorGUI("对方断言(" + QString::number(row) + ","  + QString::number(column) + ")未命中!");
     }
 
     //判断是否猜中并发送回复断言包
