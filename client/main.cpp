@@ -13,9 +13,9 @@ int main(int argc, char *argv[])
     }
 
 //    // 显示登录GUI
-//    w.loginGUI();
+    w.loginGUI();
 //    w.chatRoomGUI();
-w.InitGameWindow();
+//w.InitGameWindow();
 
 
     return a.exec();

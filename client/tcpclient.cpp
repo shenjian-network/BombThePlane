@@ -1250,6 +1250,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_loc[1] = (cur_oppo_row + 3) * BOARD_SIZE + cur_oppo_column;
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
+                    auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+                    button->setEnabled(true);
                 }else{
 //                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
@@ -1300,6 +1302,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_loc[1] = (cur_oppo_row - 3) * BOARD_SIZE + cur_oppo_column;
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
+                    auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+                    button->setEnabled(true);
                 } else{
 //                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
@@ -1350,6 +1354,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_loc[1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column + 3);
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
+                    auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+                    button->setEnabled(true);
                 } else{
 //                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
@@ -1400,6 +1406,8 @@ void TcpClient::setOppoPlane(int row, int column){
                     guess_loc[1] = cur_oppo_row * BOARD_SIZE + (cur_oppo_column - 3);
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
+                    auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+                    button->setEnabled(true);
                 } else {
 //                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
@@ -1413,8 +1421,7 @@ void TcpClient::setOppoPlane(int row, int column){
         oppo_board->setCurrentCell(cur_oppo_row, cur_oppo_column);
 
 
-        auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
-        button->setEnabled(true);
+
 }
 
 void TcpClient::previewPlane(int row, int column){
@@ -3012,6 +3019,7 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
                             oppo_board->item(row+3, column-1)->setBackgroundColor(original_color);
                             oppo_board->item(row+3, column)->setBackgroundColor(original_color);
                             oppo_board->item(row+3, column+1)->setBackgroundColor(original_color);
+                            guess_board[row][column] = 0;
                             guess_board[row+1][column-2] = 0;
                             guess_board[row+1][column-1] = 0;
                             guess_board[row+1][column] = 0;
@@ -3033,6 +3041,7 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
                             oppo_board->item(row-3, column-1)->setBackgroundColor(original_color);
                             oppo_board->item(row-3, column)->setBackgroundColor(original_color);
                             oppo_board->item(row-3, column+1)->setBackgroundColor(original_color);
+                            guess_board[row][column] = 0;
                             guess_board[row-1][column-2] = 0;
                             guess_board[row-1][column-1] = 0;
                             guess_board[row-1][column] = 0;
@@ -3056,6 +3065,7 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
                             oppo_board->item(row-1, column+3)->setBackgroundColor(original_color);
                             oppo_board->item(row, column+3)->setBackgroundColor(original_color);
                             oppo_board->item(row+1, column+3)->setBackgroundColor(original_color);
+                            guess_board[row][column] = 0;
                             guess_board[row+2][column+1] = 0;
                             guess_board[row+1][column+1] = 0;
                             guess_board[row][column+1] = 0;
@@ -3078,6 +3088,7 @@ void TcpClient::recvReplyAssertPlanePos(const unsigned short res)
                             oppo_board->item(row-1, column-3)->setBackgroundColor(original_color);
                             oppo_board->item(row, column-3)->setBackgroundColor(original_color);
                             oppo_board->item(row+1, column-3)->setBackgroundColor(original_color);
+                            guess_board[row][column] = 0;
                             guess_board[row+2][column-1] = 0;
                             guess_board[row+1][column-1] = 0;
                             guess_board[row][column-1] = 0;
@@ -3572,12 +3583,24 @@ void TcpClient::on_setstate(){
     auto button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
     if(button->text() == "猜测"){
         isGuess = true;
+        auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+        button->setEnabled(false);
+
+        auto button2 = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(1)->widget());
+        button2->setEnabled(false);
     } else if(button->text() == "断言"){
+        auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+        button->setEnabled(true);
+
+        auto button2 = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(1)->widget());
+        button2->setEnabled(true);
         isGuess = false;
     }
 }
 
 void TcpClient::on_ackbtn_clicked(){
+    auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+    button->setEnabled(false);
     if(isGuess) {
         askForPointState();
     } else {
@@ -3593,6 +3616,22 @@ void TcpClient::cancel_setplane(){
     // 需要去掉
     int row = static_cast<int>(guess_loc[0] / BOARD_SIZE);
     int column = static_cast<int>(guess_loc[0] % BOARD_SIZE);
+
+    int direction_index;
+    if(guess_loc[1] > guess_loc[0]) {
+        if(guess_loc[0] % BOARD_SIZE == guess_loc[1] % BOARD_SIZE){
+            direction_index = 0;
+        } else {
+            direction_index = 2;
+        }
+    } else {
+        if(guess_loc[0] % BOARD_SIZE == guess_loc[1] % BOARD_SIZE){
+            direction_index = 1;
+        } else {
+            direction_index = 3;
+        }
+    }
+
     oppo_board->item(row, column)->setBackgroundColor(original_color);
     guess_board[row][column] = 0;
     if(direction_index == 0) {
