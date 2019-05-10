@@ -915,6 +915,12 @@ void TcpClient::InitGameWindow(){
 
       control_layout->addLayout(sublayout);
 
+      auto cancel_button = new QPushButton("撤销");
+      cancel_button->setFixedSize(100, 20);
+      connect(cancel_button, SIGNAL(clicked()), this, SLOT(cancel_setplane()));
+      cancel_button->setEnabled(false);
+      control_layout->addWidget(cancel_button);
+
 
 
       layout->setSpacing(0);
@@ -952,8 +958,8 @@ void TcpClient::setPlane(int row, int column){
     cur_column = column;
     auto random_color = PLANE_COLOR[my_plane_cnt];
     // head
-    my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
-    valid_board[cur_row][cur_column] = 2;
+//    my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
+//    valid_board[cur_row][cur_column] = 2;
 
 
     int temp_board[BOARD_SIZE][BOARD_SIZE];
@@ -986,6 +992,7 @@ void TcpClient::setPlane(int row, int column){
             }
 
             if(!sum){
+                my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
                 my_board->item(cur_row+1, cur_column-2)->setBackgroundColor(random_color);
                 my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(random_color);
                 my_board->item(cur_row+1, cur_column)->setBackgroundColor(random_color);
@@ -995,6 +1002,7 @@ void TcpClient::setPlane(int row, int column){
                 my_board->item(cur_row+3, cur_column-1)->setBackgroundColor(random_color);
                 my_board->item(cur_row+3, cur_column)->setBackgroundColor(random_color);
                 my_board->item(cur_row+3, cur_column+1)->setBackgroundColor(random_color);
+                valid_board[cur_row][cur_column] = 3;
                 valid_board[cur_row+1][cur_column-2] = 1;
                 valid_board[cur_row+1][cur_column-1] = 1;
                 valid_board[cur_row+1][cur_column] = 1;
@@ -1008,12 +1016,10 @@ void TcpClient::setPlane(int row, int column){
                 my_plane_loc[my_plane_cnt][1] = (cur_row + 3) * BOARD_SIZE + cur_column;
                 my_plane_cnt += 1;
             }else{
-                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-                valid_board[cur_row][cur_column] = 0;
+//                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
             }
         } else {
-            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-            valid_board[cur_row][cur_column] = 0;
+//            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
         }
     } else if(direction_index == 1) { // 下
         if(cur_column - 2 >= 0 && cur_column + 2 <= 9 && cur_row - 3 >= 0) {
@@ -1035,6 +1041,7 @@ void TcpClient::setPlane(int row, int column){
             }
 
             if(!sum){
+                my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
                 my_board->item(cur_row-1, cur_column-2)->setBackgroundColor(random_color);
                 my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(random_color);
                 my_board->item(cur_row-1, cur_column)->setBackgroundColor(random_color);
@@ -1044,6 +1051,7 @@ void TcpClient::setPlane(int row, int column){
                 my_board->item(cur_row-3, cur_column-1)->setBackgroundColor(random_color);
                 my_board->item(cur_row-3, cur_column)->setBackgroundColor(random_color);
                 my_board->item(cur_row-3, cur_column+1)->setBackgroundColor(random_color);
+                valid_board[cur_row][cur_column] = 3;
                 valid_board[cur_row-1][cur_column-2] = 1;
                 valid_board[cur_row-1][cur_column-1] = 1;
                 valid_board[cur_row-1][cur_column] = 1;
@@ -1057,12 +1065,10 @@ void TcpClient::setPlane(int row, int column){
                 my_plane_loc[my_plane_cnt][1] = (cur_row - 3) * BOARD_SIZE + cur_column;
                 my_plane_cnt += 1;
             } else{
-                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-                valid_board[cur_row][cur_column] = 0;
+//                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
             }
         } else {
-            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-            valid_board[cur_row][cur_column] = 0;
+//            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
         }
     } else if(direction_index == 2) { // 左
         if(cur_column + 3 <= 9 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
@@ -1084,6 +1090,7 @@ void TcpClient::setPlane(int row, int column){
             }
 
             if(!sum){
+                my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
                 my_board->item(cur_row+2, cur_column+1)->setBackgroundColor(random_color);
                 my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(random_color);
                 my_board->item(cur_row, cur_column+1)->setBackgroundColor(random_color);
@@ -1093,6 +1100,7 @@ void TcpClient::setPlane(int row, int column){
                 my_board->item(cur_row-1, cur_column+3)->setBackgroundColor(random_color);
                 my_board->item(cur_row, cur_column+3)->setBackgroundColor(random_color);
                 my_board->item(cur_row+1, cur_column+3)->setBackgroundColor(random_color);
+                valid_board[cur_row][cur_column] = 3;
                 valid_board[cur_row+2][cur_column+1] = 1;
                 valid_board[cur_row+1][cur_column+1] = 1;
                 valid_board[cur_row][cur_column+1] = 1;
@@ -1106,12 +1114,10 @@ void TcpClient::setPlane(int row, int column){
                 my_plane_loc[my_plane_cnt][1] = cur_row * BOARD_SIZE + (cur_column + 3);
                 my_plane_cnt += 1;
             } else{
-                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-                valid_board[cur_row][cur_column] = 0;
+//                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
             }
         } else {
-            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-            valid_board[cur_row][cur_column] = 0;
+//            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
         }
     } else if(direction_index == 3) { // 右
         if(cur_column - 3 >= 0 && cur_row - 2 >= 0 && cur_row + 2 <= 9) {
@@ -1133,6 +1139,7 @@ void TcpClient::setPlane(int row, int column){
             }
 
             if(!sum){
+                my_board->item(cur_row, cur_column)->setBackgroundColor(random_color);
                 my_board->item(cur_row+2, cur_column-1)->setBackgroundColor(random_color);
                 my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(random_color);
                 my_board->item(cur_row, cur_column-1)->setBackgroundColor(random_color);
@@ -1142,6 +1149,7 @@ void TcpClient::setPlane(int row, int column){
                 my_board->item(cur_row-1, cur_column-3)->setBackgroundColor(random_color);
                 my_board->item(cur_row, cur_column-3)->setBackgroundColor(random_color);
                 my_board->item(cur_row+1, cur_column-3)->setBackgroundColor(random_color);
+                valid_board[cur_row][cur_column] = 3;
                 valid_board[cur_row+2][cur_column-1] = 1;
                 valid_board[cur_row+1][cur_column-1] = 1;
                 valid_board[cur_row][cur_column-1] = 1;
@@ -1155,12 +1163,10 @@ void TcpClient::setPlane(int row, int column){
                 my_plane_loc[my_plane_cnt][1] = cur_row * BOARD_SIZE + (cur_column - 3);
                 my_plane_cnt += 1;
             } else {
-                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-                valid_board[cur_row][cur_column] = 0;
+//                my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
             }
         } else {
-            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
-            valid_board[cur_row][cur_column] = 0;
+//            my_board->item(cur_row, cur_column)->setBackgroundColor(original_color);
         }
     }
 
@@ -1184,9 +1190,9 @@ void TcpClient::setOppoPlane(int row, int column){
         }
         auto random_color = PLANE_COLOR[oppo_plane_cnt];
         // head
-        auto color = oppo_board->item(cur_oppo_row, cur_oppo_column)->backgroundColor();
-        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(random_color);
-        guess_board[cur_oppo_row][cur_oppo_column] = 2;
+//        auto color = oppo_board->item(cur_oppo_row, cur_oppo_column)->backgroundColor();
+//        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(random_color);
+//        guess_board[cur_oppo_row][cur_oppo_column] = 2;
 
 
         int temp_board[BOARD_SIZE][BOARD_SIZE];
@@ -1217,10 +1223,10 @@ void TcpClient::setOppoPlane(int row, int column){
                         sum += guess_board[i][j] & temp_board[i][j];
                     }
                 }
-                qDebug() << "Sum:" << sum;
 
 
                 if(!sum){
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+1, cur_oppo_column-2)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+1, cur_oppo_column-1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+1, cur_oppo_column)->setBackgroundColor(random_color);
@@ -1230,6 +1236,7 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_board->item(cur_oppo_row+3, cur_oppo_column-1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+3, cur_oppo_column)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+3, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 3;
                     guess_board[cur_oppo_row+1][cur_oppo_column-2] = 1;
                     guess_board[cur_oppo_row+1][cur_oppo_column-1] = 1;
                     guess_board[cur_oppo_row+1][cur_oppo_column] = 1;
@@ -1244,12 +1251,10 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 }else{
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
             } else {
-                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
             }
         } else if(direction_index == 1) { // 下
             if(cur_oppo_column - 2 >= 0 && cur_oppo_column + 2 <= 9 && cur_oppo_row - 3 >= 0) {
@@ -1271,6 +1276,7 @@ void TcpClient::setOppoPlane(int row, int column){
                 }
 
                 if(!sum){
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row-1, cur_oppo_column-2)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row-1, cur_oppo_column-1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row-1, cur_oppo_column)->setBackgroundColor(random_color);
@@ -1280,6 +1286,7 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_board->item(cur_oppo_row-3, cur_oppo_column-1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row-3, cur_oppo_column)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row-3, cur_oppo_column+1)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 3;
                     guess_board[cur_oppo_row-1][cur_oppo_column-2] = 1;
                     guess_board[cur_oppo_row-1][cur_oppo_column-1] = 1;
                     guess_board[cur_oppo_row-1][cur_oppo_column] = 1;
@@ -1294,12 +1301,10 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 } else{
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
             } else {
-                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
             }
         } else if(direction_index == 2) { // 左
             if(cur_oppo_column + 3 <= 9 && cur_oppo_row - 2 >= 0 && cur_oppo_row + 2 <= 9) {
@@ -1321,6 +1326,7 @@ void TcpClient::setOppoPlane(int row, int column){
                 }
 
                 if(!sum){
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+2, cur_oppo_column+1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+1, cur_oppo_column+1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row, cur_oppo_column+1)->setBackgroundColor(random_color);
@@ -1330,6 +1336,7 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_board->item(cur_oppo_row-1, cur_oppo_column+3)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row, cur_oppo_column+3)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+1, cur_oppo_column+3)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 3;
                     guess_board[cur_oppo_row+2][cur_oppo_column+1] = 1;
                     guess_board[cur_oppo_row+1][cur_oppo_column+1] = 1;
                     guess_board[cur_oppo_row][cur_oppo_column+1] = 1;
@@ -1344,12 +1351,10 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 } else{
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
             } else {
-                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
             }
         } else if(direction_index == 3) { // 右
             if(cur_oppo_column - 3 >= 0 && cur_oppo_row - 2 >= 0 && cur_oppo_row + 2 <= 9) {
@@ -1371,6 +1376,7 @@ void TcpClient::setOppoPlane(int row, int column){
                 }
 
                 if(!sum){
+                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+2, cur_oppo_column-1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+1, cur_oppo_column-1)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row, cur_oppo_column-1)->setBackgroundColor(random_color);
@@ -1380,6 +1386,7 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_board->item(cur_oppo_row-1, cur_oppo_column-3)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row, cur_oppo_column-3)->setBackgroundColor(random_color);
                     oppo_board->item(cur_oppo_row+1, cur_oppo_column-3)->setBackgroundColor(random_color);
+                    guess_board[cur_oppo_row][cur_oppo_column] = 3;
                     guess_board[cur_oppo_row+2][cur_oppo_column-1] = 1;
                     guess_board[cur_oppo_row+1][cur_oppo_column-1] = 1;
                     guess_board[cur_oppo_row][cur_oppo_column-1] = 1;
@@ -1394,18 +1401,20 @@ void TcpClient::setOppoPlane(int row, int column){
                     oppo_plane_cnt += 1;
                     oppo_board->setEnabled(false);
                 } else {
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                    guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                 }
             } else {
-                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
-                guess_board[cur_oppo_row][cur_oppo_column] = 0;
+//                oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
             }
         }
 
         cur_oppo_row = -1;
         cur_oppo_column = -1;
         oppo_board->setCurrentCell(cur_oppo_row, cur_oppo_column);
+
+
+        auto button = static_cast<QPushButton*>(gameWindow->layout()->itemAt(2)->layout()->itemAt(4)->widget());
+        button->setEnabled(true);
 }
 
 void TcpClient::previewPlane(int row, int column){
@@ -1483,8 +1492,7 @@ void TcpClient::previewPlane(int row, int column){
         pre_not_valid = false;
 
         // head
-        auto color = my_board->item(cur_row, cur_column)->backgroundColor();
-        my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
+
         temp_board[cur_row][cur_column] = 1;
         // 上
         if(direction_index == 0) {
@@ -1508,6 +1516,7 @@ void TcpClient::previewPlane(int row, int column){
                 }
 
                 if(!sum){
+                    my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+1, cur_column-2)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+1, cur_column)->setBackgroundColor(QColor("gray"));
@@ -1518,11 +1527,9 @@ void TcpClient::previewPlane(int row, int column){
                     my_board->item(cur_row+3, cur_column)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+3, cur_column+1)->setBackgroundColor(QColor("gray"));
                 } else {
-                     my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                      pre_not_valid = true;
                 }
             } else {
-                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                 pre_not_valid = true;
             }
         } else if(direction_index == 1) { // 下
@@ -1545,6 +1552,7 @@ void TcpClient::previewPlane(int row, int column){
                 }
 
                 if(!sum){
+                    my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row-1, cur_column-2)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row-1, cur_column-1)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row-1, cur_column)->setBackgroundColor(QColor("gray"));
@@ -1555,11 +1563,9 @@ void TcpClient::previewPlane(int row, int column){
                     my_board->item(cur_row-3, cur_column)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row-3, cur_column+1)->setBackgroundColor(QColor("gray"));
                 } else {
-                    my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                     pre_not_valid = true;
                 }
             } else {
-                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                 pre_not_valid = true;
             }
         } else if(direction_index == 2) { // 左
@@ -1582,6 +1588,7 @@ void TcpClient::previewPlane(int row, int column){
                 }
 
                 if(!sum){
+                    my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+2, cur_column+1)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+1, cur_column+1)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row, cur_column+1)->setBackgroundColor(QColor("gray"));
@@ -1592,11 +1599,9 @@ void TcpClient::previewPlane(int row, int column){
                     my_board->item(cur_row, cur_column+3)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+1, cur_column+3)->setBackgroundColor(QColor("gray"));
                 } else {
-                    my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                     pre_not_valid = true;
                 }
             } else {
-                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                 pre_not_valid = true;
             }
         } else if(direction_index == 3) { // 右
@@ -1619,6 +1624,7 @@ void TcpClient::previewPlane(int row, int column){
                 }
 
                 if(!sum){
+                    my_board->item(cur_row, cur_column)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+2, cur_column-1)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+1, cur_column-1)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row, cur_column-1)->setBackgroundColor(QColor("gray"));
@@ -1629,11 +1635,9 @@ void TcpClient::previewPlane(int row, int column){
                     my_board->item(cur_row, cur_column-3)->setBackgroundColor(QColor("gray"));
                     my_board->item(cur_row+1, cur_column-3)->setBackgroundColor(QColor("gray"));
                 } else {
-                    my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                     pre_not_valid = true;
                 }
             } else {
-                my_board->item(cur_row, cur_column)->setBackgroundColor(color);
                 pre_not_valid = true;
             }
         }
@@ -1716,8 +1720,7 @@ void TcpClient::previewOppoPlane(int row, int column){
             pre_not_valid_oppo = false;
 
             // head
-            auto color = oppo_board->item(cur_oppo_row, cur_oppo_column)->backgroundColor();
-            oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(QColor("gray"));
+//            oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(QColor("gray"));
             temp_board[cur_oppo_row][cur_oppo_column] = 1;
             // 上
             if(direction_index == 0) {
@@ -1741,6 +1744,7 @@ void TcpClient::previewOppoPlane(int row, int column){
                     }
 
                     if(!sum){
+                        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+1, cur_oppo_column-2)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+1, cur_oppo_column-1)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+1, cur_oppo_column)->setBackgroundColor(QColor("gray"));
@@ -1751,11 +1755,9 @@ void TcpClient::previewOppoPlane(int row, int column){
                         oppo_board->item(cur_oppo_row+3, cur_oppo_column)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+3, cur_oppo_column+1)->setBackgroundColor(QColor("gray"));
                     } else {
-                         oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                          pre_not_valid_oppo = true;
                     }
                 } else {
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                     pre_not_valid_oppo = true;
                 }
             } else if(direction_index == 1) { // 下
@@ -1778,6 +1780,7 @@ void TcpClient::previewOppoPlane(int row, int column){
                     }
 
                     if(!sum){
+                        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row-1, cur_oppo_column-2)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row-1, cur_oppo_column-1)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row-1, cur_oppo_column)->setBackgroundColor(QColor("gray"));
@@ -1788,11 +1791,9 @@ void TcpClient::previewOppoPlane(int row, int column){
                         oppo_board->item(cur_oppo_row-3, cur_oppo_column)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row-3, cur_oppo_column+1)->setBackgroundColor(QColor("gray"));
                     } else {
-                        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                         pre_not_valid_oppo = true;
                     }
                 } else {
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                     pre_not_valid_oppo = true;
                 }
             } else if(direction_index == 2) { // 左
@@ -1815,6 +1816,7 @@ void TcpClient::previewOppoPlane(int row, int column){
                     }
 
                     if(!sum){
+                        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+2, cur_oppo_column+1)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+1, cur_oppo_column+1)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row, cur_oppo_column+1)->setBackgroundColor(QColor("gray"));
@@ -1825,11 +1827,9 @@ void TcpClient::previewOppoPlane(int row, int column){
                         oppo_board->item(cur_oppo_row, cur_oppo_column+3)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+1, cur_oppo_column+3)->setBackgroundColor(QColor("gray"));
                     } else {
-                        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                         pre_not_valid_oppo = true;
                     }
                 } else {
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                     pre_not_valid_oppo = true;
                 }
             } else if(direction_index == 3) { // 右
@@ -1852,6 +1852,7 @@ void TcpClient::previewOppoPlane(int row, int column){
                     }
 
                     if(!sum){
+                        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+2, cur_oppo_column-1)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+1, cur_oppo_column-1)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row, cur_oppo_column-1)->setBackgroundColor(QColor("gray"));
@@ -1862,11 +1863,9 @@ void TcpClient::previewOppoPlane(int row, int column){
                         oppo_board->item(cur_oppo_row, cur_oppo_column-3)->setBackgroundColor(QColor("gray"));
                         oppo_board->item(cur_oppo_row+1, cur_oppo_column-3)->setBackgroundColor(QColor("gray"));
                     } else {
-                        oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                         pre_not_valid_oppo = true;
                     }
                 } else {
-                    oppo_board->item(cur_oppo_row, cur_oppo_column)->setBackgroundColor(color);
                     pre_not_valid_oppo = true;
                 }
             }
@@ -2725,7 +2724,14 @@ void TcpClient::replyPointState()
     static const unsigned short kExtendReplyPreHurt=0x01; // 猜测伤飞机
     static const unsigned short kExtendReplyPreDestroy=0x02; // 猜测毁飞机
     */
-    PointState = valid_board[row][column];
+    if(valid_board[row][column] == 0){
+        PointState = 0;
+    } else if(valid_board[row][column] == 1){
+        PointState = 1;
+    } else if(valid_board[row][column] == 3) {
+        PointState = 2;
+    }
+
 
     //回复棋盘坐标和相应的状态PointState，然后转为先手
     PacketHead sendPacketHead;
@@ -3577,4 +3583,105 @@ void TcpClient::on_ackbtn_clicked(){
     } else {
         assertPlanePos();
     }
+}
+
+
+void TcpClient::cancel_setplane(){
+    QObject * object = QObject::sender();
+    auto button = static_cast<QPushButton*>(qobject_cast<QWidget*>(object));
+    button->setEnabled(false);
+    // 需要去掉
+    int row = static_cast<int>(guess_loc[0] / BOARD_SIZE);
+    int column = static_cast<int>(guess_loc[0] % BOARD_SIZE);
+    oppo_board->item(row, column)->setBackgroundColor(original_color);
+    guess_board[row][column] = 0;
+    if(direction_index == 0) {
+                        oppo_board->item(row+1, column-2)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column+1)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column+2)->setBackgroundColor(original_color);
+                        oppo_board->item(row+2, column)->setBackgroundColor(original_color);
+                        oppo_board->item(row+3, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row+3, column)->setBackgroundColor(original_color);
+                        oppo_board->item(row+3, column+1)->setBackgroundColor(original_color);
+                        guess_board[row+1][column-2] = 0;
+                        guess_board[row+1][column-1] = 0;
+                        guess_board[row+1][column] = 0;
+                        guess_board[row+1][column+1] = 0;
+                        guess_board[row+1][column+2] = 0;
+                        guess_board[row+2][column] = 0;
+                        guess_board[row+3][column-1] = 0;
+                        guess_board[row+3][column] = 0;
+                        guess_board[row+3][column+1] = 0;
+
+            } else if(direction_index == 1) { // 下
+
+                        oppo_board->item(row-1, column-2)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column+1)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column+2)->setBackgroundColor(original_color);
+                        oppo_board->item(row-2, column)->setBackgroundColor(original_color);
+                        oppo_board->item(row-3, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row-3, column)->setBackgroundColor(original_color);
+                        oppo_board->item(row-3, column+1)->setBackgroundColor(original_color);
+                        guess_board[row-1][column-2] = 0;
+                        guess_board[row-1][column-1] = 0;
+                        guess_board[row-1][column] = 0;
+                        guess_board[row-1][column+1] = 0;
+                        guess_board[row-1][column+2] = 0;
+                        guess_board[row-2][column] = 0;
+                        guess_board[row-3][column-1] = 0;
+                        guess_board[row-3][column] = 0;
+                        guess_board[row-3][column+1] = 0;
+
+
+
+            } else if(direction_index == 2) { // 左
+
+                        oppo_board->item(row+2, column+1)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column+1)->setBackgroundColor(original_color);
+                        oppo_board->item(row, column+1)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column+1)->setBackgroundColor(original_color);
+                        oppo_board->item(row-2, column+1)->setBackgroundColor(original_color);
+                        oppo_board->item(row, column+2)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column+3)->setBackgroundColor(original_color);
+                        oppo_board->item(row, column+3)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column+3)->setBackgroundColor(original_color);
+                        guess_board[row+2][column+1] = 0;
+                        guess_board[row+1][column+1] = 0;
+                        guess_board[row][column+1] = 0;
+                        guess_board[row-1][column+1] = 0;
+                        guess_board[row-2][column+1] = 0;
+                        guess_board[row][column+2] = 0;
+                        guess_board[row-1][column+3] = 0;
+                        guess_board[row][column+3] = 0;
+                        guess_board[row+1][column+3] = 0;
+
+
+            } else if(direction_index == 3) { // 右
+
+                        oppo_board->item(row+2, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row-2, column-1)->setBackgroundColor(original_color);
+                        oppo_board->item(row, column-2)->setBackgroundColor(original_color);
+                        oppo_board->item(row-1, column-3)->setBackgroundColor(original_color);
+                        oppo_board->item(row, column-3)->setBackgroundColor(original_color);
+                        oppo_board->item(row+1, column-3)->setBackgroundColor(original_color);
+                        guess_board[row+2][column-1] = 0;
+                        guess_board[row+1][column-1] = 0;
+                        guess_board[row][column-1] = 0;
+                        guess_board[row-1][column-1] = 0;
+                        guess_board[row-2][column-1] = 0;
+                        guess_board[row][column-2] = 0;
+                        guess_board[row-1][column-3] = 0;
+                        guess_board[row][column-3] = 0;
+                        guess_board[row+1][column-3] = 0;
+
+            }
+    oppo_plane_cnt -= 1;
+    oppo_board->setEnabled(true);
 }

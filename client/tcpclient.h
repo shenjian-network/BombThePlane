@@ -241,6 +241,8 @@ private slots:
     void on_setstate();
 
     void on_ackbtn_clicked();
+
+    void cancel_setplane();
 private:
     PacketHead my_packet_head;
     ServerToClientReportSuccess my_server_to_client_report_success;
